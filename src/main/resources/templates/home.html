@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Home')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: publicHeader('home')}"></header>
+<div th:replace="~{fragments/layout :: flash}"></div>
+<main>
+    <section class="hero" id="journey-search">
+        <div class="hero-inner">
+            <div class="hero-copy">
+                <p class="hero-kicker">Sri Lanka by rail</p>
+                <h1>Your next journey starts here</h1>
+                <p>Find a scheduled train, choose a real carriage seat and keep every booking in one convenient place.</p>
+                <div class="hero-trust"><span><span class="material-symbols-outlined">event_seat</span>Live seat map</span><span><span class="material-symbols-outlined">confirmation_number</span>Instant e-ticket</span></div>
+            </div>
+            <form th:if="${canSearch}" class="search-card" th:action="@{/search}" method="get">
+                <div class="search-card-heading"><span class="material-symbols-outlined">route</span><div><strong>Plan your journey</strong><small>Start typing or click a field to choose a station.</small></div></div>
+                <div class="form-grid">
+                    <div class="field station-autocomplete"><label for="from">From station</label><div class="input-with-icon"><span class="material-symbols-outlined">location_on</span><input id="from" data-station-input data-station-list="station-options" name="from" required autocomplete="off" placeholder="e.g. Colombo Fort"></div></div>
+                    <div class="field station-autocomplete"><label for="to">To station</label><div class="input-with-icon"><span class="material-symbols-outlined">near_me</span><input id="to" data-station-input data-station-list="station-options" name="to" required autocomplete="off" placeholder="e.g. Kandy"></div></div>
+                    <div class="field"><label for="date">Travel date</label><div class="input-with-icon"><span class="material-symbols-outlined">calendar_today</span><input id="date" name="date" type="date" required th:value="${defaultDate}"></div></div>
+                    <div class="field"><label for="passengers">Passengers</label><div class="input-with-icon"><span class="material-symbols-outlined">group</span><input id="passengers" name="passengers" type="number" min="1" max="10" value="1"></div></div>
+                </div>
+                <datalist id="station-options"><option th:each="station : ${stations}" th:value="${station}"></option></datalist>
+                <button class="button button-primary button-block search-submit" type="submit"><span class="material-symbols-outlined">search</span>Search Trains</button>
+            </form>
+            <div th:unless="${canSearch}" class="search-card staff-landing-card">
+                <span class="material-symbols-outlined">admin_panel_settings</span><h2>Staff administration</h2><p>Your account manages railway operations rather than customer bookings.</p><a class="button button-primary button-block" th:href="@{/admin}">Open Admin Portal</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="journey-strip" aria-label="RailConnect service benefits">
+        <div><span class="material-symbols-outlined">train</span><p><strong>Island-wide routes</strong><small>Search active stations and schedules</small></p></div>
+        <div><span class="material-symbols-outlined">airline_seat_recline_extra</span><p><strong>Choose your seat</strong><small>See availability by class and carriage</small></p></div>
+        <div><span class="material-symbols-outlined">verified</span><p><strong>Clear confirmation</strong><small>Track bookings with a reference</small></p></div>
+    </section>
+
+    <section class="section">
+        <p class="eyebrow">Simple and transparent</p>
+        <h2 class="section-heading">Book with confidence</h2>
+        <p class="section-intro">Everything needed for a university-scale railway booking experience, without unnecessary steps.</p>
+        <div class="step-grid">
+            <article class="step-card"><span class="step-number"><span class="material-symbols-outlined">search</span></span><h3>1. Find a train</h3><p>Choose your origin, destination and travel date from available stations.</p></article>
+            <article class="step-card"><span class="step-number"><span class="material-symbols-outlined">airline_seat_recline_extra</span></span><h3>2. Select seats</h3><p>Compare carriage classes and choose from the current seat map.</p></article>
+            <article class="step-card"><span class="step-number"><span class="material-symbols-outlined">task_alt</span></span><h3>3. Get your ticket</h3><p>Complete a simulated payment and receive a printable e-ticket.</p></article>
+        </div>
+    </section>
+
+    <section class="explore-section">
+        <div class="section explore-grid">
+            <div class="feature-visual" role="img" aria-label="A Sri Lankan railway station in the hill country"></div>
+            <div class="feature-copy"><p class="eyebrow">Explore Sri Lanka</p><h2>From the city to the hill country</h2><p>RailConnect keeps route discovery, seat selection and booking details together, whether you are planning a daily trip or a scenic journey.</p><ul><li><span class="material-symbols-outlined">check_circle</span>Carriage-specific fares and seats</li><li><span class="material-symbols-outlined">check_circle</span>Passenger profile used securely at checkout</li><li><span class="material-symbols-outlined">check_circle</span>Assisted cash bookings at the counter</li></ul><a class="text-link" th:if="${canSearch}" href="#journey-search">Plan a journey <span aria-hidden="true">→</span></a></div>
+        </div>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

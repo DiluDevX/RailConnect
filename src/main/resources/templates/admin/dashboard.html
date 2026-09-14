@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Admin Dashboard')}"></head>
+<body>
+<div class="admin-shell">
+    <aside th:replace="~{fragments/layout :: adminSidebar('dashboard')}"></aside>
+    <main class="admin-main">
+        <header th:replace="~{fragments/layout :: adminTopbar('Dashboard Overview')}"></header>
+        <div th:replace="~{fragments/layout :: flash}"></div>
+        <div class="admin-content">
+            <header class="page-header"><div><h1>Dashboard Overview</h1><p>Current RailConnect operational summary.</p></div></header>
+            <section class="stat-grid">
+                <article class="stat-card"><span>Active trains</span><strong th:text="${activeTrains}">0</strong></article>
+                <article class="stat-card"><span>Today's schedules</span><strong th:text="${todaySchedules}">0</strong></article>
+                <article class="stat-card"><span>Confirmed bookings</span><strong th:text="${confirmedBookings}">0</strong></article>
+                <article class="stat-card"><span>Pending complaints</span><strong th:text="${pendingComplaints}">0</strong></article>
+            </section>
+            <section class="dashboard-grid">
+                <article class="card"><header class="card-header"><h2>Recent bookings</h2><a th:href="@{/admin/bookings}">View all</a></header><div class="card-body">
+                    <div th:if="${#lists.isEmpty(recentBookings)}" class="empty-state">No bookings yet.</div>
+                    <div th:each="booking : ${recentBookings}" class="summary-line"><a th:href="@{/bookings/{id}(id=${booking.id})}" th:text="${booking.bookingReference}"></a><span th:text="${booking.passengerName}"></span><span class="status" th:classappend="${'status-' + #strings.toLowerCase(booking.status)}" th:text="${booking.status}"></span></div>
+                </div></article>
+                <article class="card"><header class="card-header"><h2>Upcoming schedules</h2><a th:href="@{/admin/schedules}">Full schedule</a></header><div class="card-body">
+                    <div th:if="${#lists.isEmpty(upcomingSchedules)}" class="empty-state">No upcoming schedules.</div>
+                    <div th:each="schedule : ${upcomingSchedules}" class="summary-line"><strong th:text="${schedule.route.startStation + ' → ' + schedule.route.endStation}"></strong><span th:text="${#temporals.format(schedule.travelDate, 'dd MMM') + ' ' + #temporals.format(schedule.departureTime, 'HH:mm')}"></span></div>
+                </div></article>
+            </section>
+        </div>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+</body>
+</html>
