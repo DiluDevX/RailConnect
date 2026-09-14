@@ -40,6 +40,43 @@ docker compose down
 Do not use `docker compose down -v` unless you intentionally want to delete the
 local database volume.
 
+## Windows setup with local MySQL (without Docker)
+
+If Docker Desktop is not being used, install **MySQL Community Server 8.0** on
+Windows and make sure `mysql.exe` is available in PowerShell. The default MySQL
+installation path is usually:
+
+```text
+C:\Program Files\MySQL\MySQL Server 8.0\bin
+```
+
+From the project root, open PowerShell and run the helper. It creates the
+`railconnect` database and the development application user without deleting
+existing data:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\database\setup-windows.ps1
+```
+
+The helper prompts for the MySQL root password. Then start the application with
+the local-MySQL settings (the Windows MySQL default port is `3306`, not the
+Docker port `3307`):
+
+```powershell
+$env:DB_URL = "jdbc:mysql://127.0.0.1:3306/railconnect?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Colombo"
+$env:DB_USERNAME = "railconnect"
+$env:DB_PASSWORD = "railconnect_dev"
+mvn spring-boot:run
+```
+
+Flyway runs automatically when Spring Boot starts. It applies every migration
+under `src/main/resources/db/migration` in version order and inserts the demo
+users, trains, routes, carriages, seats, schedules, bookings and complaints.
+No manual table creation is required.
+
+The full Windows checklist, backup command and optional SQL-dump restore command
+are in [database/README.md](database/README.md).
+
 ## Demo accounts
 
 All seeded demo accounts use the password `password`.
