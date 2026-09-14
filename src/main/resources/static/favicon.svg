@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="RailConnect">
+  <rect width="64" height="64" rx="14" fill="#082d55"/>
+  <path fill="#fff" d="M17 12h30v28c0 6-5 10-15 10S17 46 17 40V12Zm7 7v11h16V19H24Zm-1 17h18v-3H23v3Zm-3 14 5-7h10l5 7h-6l-4-4-4 4h-6Z"/>
+</svg>

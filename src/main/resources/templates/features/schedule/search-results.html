@@ -1,0 +1,16 @@
+<!DOCTYPE html><html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"><head th:replace="~{fragments/layout :: head('Search Trains')}"></head><body>
+<header th:replace="~{fragments/layout :: publicHeader('search')}"></header><main class="search-results-page"><section class="section">
+<form class="search-toolbar" data-live-search th:action="@{/search}" method="get">
+    <div class="field station-autocomplete"><label for="search-from">From</label><input id="search-from" data-station-input data-station-list="search-station-options" name="from" autocomplete="off" th:value="${from}" required></div>
+    <div class="field station-autocomplete"><label for="search-to">To</label><input id="search-to" data-station-input data-station-list="search-station-options" name="to" autocomplete="off" th:value="${to}" required></div>
+    <div class="field"><label for="search-date">Travel date</label><input id="search-date" name="date" type="date" th:value="${date}" required></div>
+    <div class="field"><label for="search-passengers">Passengers</label><input id="search-passengers" name="passengers" type="number" min="1" max="10" th:value="${passengers ?: 1}"></div>
+    <button class="button button-primary" type="submit"><span class="material-symbols-outlined">search</span>Search</button>
+    <datalist id="search-station-options"><option th:each="station : ${stations}" th:value="${station}"></option></datalist>
+</form>
+<div id="search-results-content">
+<div class="results-heading"><div><h2>Available Trains</h2><p th:text="${(#strings.isEmpty(from) || #strings.isEmpty(to) ? 'Choose a route' : from + ' → ' + to) + (date == null ? '' : ' · ' + date)}"></p></div><span class="result-count" th:text="${#lists.size(schedules) + ' result' + (#lists.size(schedules) == 1 ? '' : 's') + ' found'}">0 results found</span></div>
+<div class="result-list"><article class="schedule-result" th:each="schedule : ${schedules}"><div><h3 th:text="${schedule.train.trainName}"></h3><span class="muted" th:text="${schedule.scheduleCode + ' · Train ' + schedule.train.trainNumber}"></span><span class="status status-confirmed">On time</span></div><div class="journey-times"><strong th:text="${#temporals.format(schedule.departureTime, 'HH:mm')}"></strong><small th:text="${schedule.route.startStation}"></small><span>→</span><strong th:text="${#temporals.format(schedule.arrivalTime, 'HH:mm')}"></strong><small th:text="${schedule.route.endStation}"></small></div><div class="result-price"><span>From</span><div class="price" th:text="${'LKR ' + schedule.baseFare}"></div></div><div><a sec:authorize="hasAnyRole('PASSENGER','BOOKING_OFFICER')" class="button button-primary" th:href="@{/schedules/{id}/book(id=${schedule.id})}">Select seats</a><a sec:authorize="isAnonymous()" class="button button-primary" th:href="@{/schedules/{id}/book(id=${schedule.id})}">Login to Book</a></div></article>
+<div th:if="${#lists.isEmpty(schedules)}" class="empty-state"><h2>No trains found</h2><p>Try another route or date. Demo schedules are seeded for seven to nine days from the database setup date.</p></div></div>
+</div>
+</section></main><footer th:replace="~{fragments/layout :: footer}"></footer></body></html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Login')}"></head>
+<body class="auth-page">
+<header th:replace="~{fragments/layout :: publicHeader('')}"></header>
+<main class="auth-shell">
+    <div class="auth-heading"><h1>Connect with RailConnect</h1><p>Your journey, simplified.</p></div>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <form class="auth-card" th:action="@{/login}" method="post">
+        <div class="auth-tabs"><a class="active" th:href="@{/login}">Login</a><a th:href="@{/register}">Register</a></div>
+        <div th:if="${param.error}" class="form-errors">The email or password is incorrect, or the account is inactive.</div>
+        <div th:if="${param.logout}" class="alert alert-success">You have signed out.</div>
+        <div class="field"><label for="username">Email address</label><input id="username" name="username" type="email" autocomplete="username" required placeholder="name@example.com"></div>
+        <div class="field" style="margin-top:18px"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required></div>
+        <p class="form-link"><a th:href="@{/forgot-password}">Forgot your password?</a></p>
+        <button class="button button-primary button-block" style="margin-top:24px" type="submit">Sign In</button>
+        <p style="text-align:center;color:var(--muted);font-size:13px">Demo accounts and credentials are listed in the project README.</p>
+    </form>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

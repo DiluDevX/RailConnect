@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Booking Details')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: publicHeader('bookings')}"></header>
+<div th:replace="~{fragments/layout :: flash}"></div>
+<main>
+<section class="section">
+    <nav class="booking-progress" aria-label="Booking progress"><span class="complete"><b>1</b>Search</span><span class="complete"><b>2</b>Seats</span><span class="complete"><b>3</b>Payment</span><span class="current" aria-current="step"><b>4</b>Ticket</span></nav>
+    <header class="page-header">
+        <div><h1 th:text="${'Booking ' + booking.bookingReference}"></h1><p>Booking record and printable ticket.</p></div>
+        <a class="button button-secondary no-print" th:if="${bookingOfficer}" href="#" onclick="window.print(); return false;"><span class="material-symbols-outlined">print</span> Print ticket(s)</a>
+        <a class="button button-secondary no-print" th:unless="${bookingOfficer}" th:href="@{/bookings/{id}/ticket.pdf(id=${booking.id})}" download><span class="material-symbols-outlined">download</span> Download E-ticket PDF</a>
+    </header>
+    <div class="booking-layout">
+        <section class="card">
+            <header class="card-header"><h2>Journey</h2><span class="status" th:classappend="${'status-' + #strings.toLowerCase(booking.status)}" th:text="${booking.status}"></span></header>
+            <div class="card-body"><dl class="detail-list">
+                <dt>Passenger</dt><dd th:text="${booking.passengerName}"></dd>
+                <dt th:unless="${bookingOfficer}">Contact</dt><dd th:unless="${bookingOfficer}" th:text="${booking.contactEmail + ' · ' + booking.contactPhone}"></dd>
+                <dt>Train</dt><dd th:text="${booking.schedule.train.trainName + ' (' + booking.schedule.train.trainNumber + ')'}"></dd>
+                <dt>Route</dt><dd th:text="${booking.schedule.route.startStation + ' → ' + booking.schedule.route.endStation}"></dd>
+                <dt>Date and time</dt><dd th:text="${#temporals.format(booking.schedule.travelDate, 'dd MMM yyyy') + ' · ' + #temporals.format(booking.schedule.departureTime, 'HH:mm')}"></dd>
+                <dt>Seats</dt><dd><span th:each="item, state : ${bookingSeats}" th:text="${item.seat.carriage.carriageNumber + '-' + item.seat.seatNumber + ' (' + item.seat.carriage.classType + ')' + (state.last ? '' : ', ')}"></span></dd>
+                <dt>Total</dt><dd th:text="${'LKR ' + booking.totalAmount}"></dd>
+            </dl></div>
+        </section>
+        <aside class="booking-summary no-print">
+            <h2>Available actions</h2>
+            <div th:if="${booking.status.name() == 'CONFIRMED'}"><a class="button button-primary button-block" th:href="${bookingOfficer ? '/schedules/' + booking.schedule.id + '/book' : '/#journey-search'}">Make another booking</a></div>
+            <div th:unless="${booking.status.name() == 'CONFIRMED'}">
+                <a sec:authorize="hasAnyRole('PASSENGER','BOOKING_OFFICER')" class="button button-primary button-block" th:if="${booking.status.name() == 'PENDING_PAYMENT'}" th:href="@{/bookings/{id}/payment(id=${booking.id})}">Continue Payment</a>
+                <form sec:authorize="hasAnyRole('PASSENGER','BOOKING_OFFICER')" th:if="${booking.status.name() == 'PAYMENT_FAILED' || booking.status.name() == 'EXPIRED'}" th:action="@{/bookings/{id}/retry(id=${booking.id})}" method="post"><button class="button button-primary button-block" type="submit">Retry Booking</button></form>
+                <form th:if="${booking.status.name() != 'CANCELLED' && booking.status.name() != 'EXPIRED'}" th:action="@{/bookings/{id}/cancel(id=${booking.id})}" method="post" style="margin-top:12px" data-confirm="Cancel this booking? Its reserved seats will be released and a successful simulated payment will be marked refunded."><button class="button button-danger button-block" type="submit">Cancel Booking</button></form>
+                <a sec:authorize="hasRole('PASSENGER')" class="button button-secondary button-block" style="margin-top:12px" th:href="@{/my-bookings}">My Bookings</a>
+                <a sec:authorize="hasAnyRole('BOOKING_OFFICER','RAILWAY_ADMIN')" class="button button-secondary button-block" style="margin-top:12px" th:href="@{/admin/bookings}">Booking Management</a>
+            </div>
+            <h3>Payment attempts</h3>
+            <div class="payment-attempt" th:each="payment : ${payments}"><span><strong th:text="${'Attempt ' + payment.attemptNumber + ' · ' + #strings.replace(payment.method.name(), '_', ' ')}"></strong><small th:text="${payment.transactionReference}"></small></span><span class="status" th:classappend="${'status-' + #strings.toLowerCase(payment.status)}" th:text="${payment.status}"></span></div>
+            <p th:if="${#lists.isEmpty(payments)}">No payment attempt recorded.</p>
+        </aside>
+    </div>
+</section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>
