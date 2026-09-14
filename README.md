@@ -50,29 +50,24 @@ installation path is usually:
 C:\Program Files\MySQL\MySQL Server 8.0\bin
 ```
 
-From the project root, open PowerShell and run the helper. It creates the
-`railconnect` database and the development application user without deleting
-existing data:
+From the project root, double-click the one-step launcher:
+
+`database\start-windows.bat`
+
+It creates the `railconnect` database if needed and starts the application. This
+matches the simple Vehicle Rental setup: MySQL `root/root` on port `3306`.
+If your password differs, edit the variables at the top of the batch file.
+You can also run the commands manually:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\database\setup-windows.ps1
-```
-
-The helper prompts for the MySQL root password. Then start the application with
-the local-MySQL settings (the Windows MySQL default port is `3306`, not the
-Docker port `3307`):
-
-```powershell
-$env:DB_URL = "jdbc:mysql://127.0.0.1:3306/railconnect?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Colombo"
-$env:DB_USERNAME = "railconnect"
-$env:DB_PASSWORD = "railconnect_dev"
+$env:DB_URL = "jdbc:mysql://127.0.0.1:3306/railconnect?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC"
+$env:DB_USERNAME = "root"
+$env:DB_PASSWORD = "root"
 mvn spring-boot:run
 ```
 
-Flyway runs automatically when Spring Boot starts. It applies every migration
-under `src/main/resources/db/migration` in version order and inserts the demo
-users, trains, routes, carriages, seats, schedules, bookings and complaints.
-No manual table creation is required.
+Hibernate creates or updates the tables automatically on startup. Flyway is
+disabled in this simple setup; the old migration files remain as reference SQL.
 
 The full Windows checklist, backup command and optional SQL-dump restore command
 are in [database/README.md](database/README.md).

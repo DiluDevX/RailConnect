@@ -1,5 +1,29 @@
 # Database setup
 
+## Simple local setup (Vehicle Rental-style)
+
+RailConnect supports the same straightforward local setup as the team's
+Vehicle Rental project. Install MySQL Server, start the MySQL service, and use:
+
+- host: `localhost`
+- port: `3306`
+- database: `railconnect`
+- username: `root`
+- password: `root`
+
+On Windows, double-click [`start-windows.bat`](start-windows.bat). It creates
+the database if needed and starts Spring Boot. Alternatively, run
+[`setup-mysql.sql`](setup-mysql.sql) in MySQL Workbench, then run
+`mvn spring-boot:run` from the project root.
+
+Hibernate uses `spring.jpa.hibernate.ddl-auto=update`, so it creates or updates
+tables automatically when the application starts. If your MySQL password is
+different, edit `src/main/resources/application.properties` or set
+`DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` before starting the app.
+
+Flyway is disabled for this simple setup. The migration files remain as
+historical/reference SQL and are not required for a fresh local database.
+
 The canonical MySQL schema and demo data are versioned Flyway migrations in:
 
 - `src/main/resources/db/migration/V1__create_railconnect_schema.sql`
