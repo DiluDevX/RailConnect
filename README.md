@@ -66,8 +66,8 @@ $env:DB_PASSWORD = "root"
 mvn spring-boot:run
 ```
 
-Hibernate creates or updates the tables automatically on startup. Flyway is
-disabled in this simple setup; the old migration files remain as reference SQL.
+Flyway creates the tables and seeds the demo data automatically on first
+startup, while Hibernate remains in `update` mode for local development.
 
 The full Windows checklist, backup command and optional SQL-dump restore command
 are in [database/README.md](database/README.md).
