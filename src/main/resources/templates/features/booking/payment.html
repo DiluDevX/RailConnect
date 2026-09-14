@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${cashPayment} ? 'Record Cash Payment' : 'Demo Card Payment')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: publicHeader('bookings')}"></header>
+<div th:replace="~{fragments/layout :: flash}"></div>
+<main><section class="section booking-page">
+    <nav class="booking-progress" aria-label="Booking progress"><span class="complete"><b>1</b>Search</span><span class="complete"><b>2</b>Seats</span><span class="current" aria-current="step"><b>3</b>Payment</span><span><b>4</b>Ticket</span></nav>
+    <header class="page-header"><div><p class="eyebrow" th:text="${cashPayment} ? 'Counter payment' : 'Secure demo checkout'"></p><h1 th:text="${cashPayment} ? 'Record Cash Payment' : 'Pay with Demo Visa'"></h1><p th:text="${cashPayment} ? 'Record the cash collected from the customer before issuing the ticket.' : 'Use the sample Visa details shown below. No real card or gateway is involved.'"></p></div></header>
+    <div class="payment-layout">
+        <section class="card booking-review-card">
+            <header class="card-header"><h2>Booking held</h2><span class="status status-pending_payment">Pending payment</span></header>
+            <div class="card-body"><dl class="detail-list"><dt>Booking reference</dt><dd th:text="${booking.bookingReference}"></dd><dt>Passenger</dt><dd th:text="${booking.passengerName}"></dd><dt>Journey</dt><dd th:text="${booking.schedule.route.startStation + ' → ' + booking.schedule.route.endStation}"></dd><dt>Date and time</dt><dd th:text="${#temporals.format(booking.schedule.travelDate, 'dd MMM yyyy') + ' at ' + #temporals.format(booking.schedule.departureTime, 'HH:mm')}"></dd><dt>Seats</dt><dd><span th:each="item, state : ${bookingSeats}" th:text="${item.seat.carriage.carriageNumber + '-' + item.seat.seatNumber + (state.last ? '' : ', ')}"></span></dd><dt>Hold expires</dt><dd th:text="${#temporals.format(booking.holdExpiresAt, 'dd MMM yyyy HH:mm')}"></dd></dl></div>
+            <footer class="booking-review-total"><span>Total to pay</span><strong th:text="${'LKR ' + booking.totalAmount}"></strong></footer>
+        </section>
+
+        <aside th:if="${!cashPayment}" class="payment-panel">
+            <div class="demo-card-preview"><div class="demo-card-top"><span class="card-chip"></span><strong>VISA</strong></div><div class="demo-card-number" data-card-preview-number>4111 1111 1111 1111</div><div class="demo-card-bottom"><span><small>CARDHOLDER</small><b data-card-preview-name>DEMO PASSENGER</b></span><span><small>EXPIRES</small><b data-card-preview-expiry>12/30</b></span></div></div>
+            <div class="simulation-badge"><span class="material-symbols-outlined">science</span><span><strong>Simulation only</strong><small>These values are validated but never stored.</small></span></div>
+            <form class="payment-form" th:action="@{/bookings/{id}/payment(id=${booking.id})}" method="post" autocomplete="off">
+                <div class="field"><label for="cardholderName">Name on card</label><input id="cardholderName" name="cardholderName" data-card-name required value="Demo Passenger"></div>
+                <div class="field"><label for="cardNumber">Visa card number</label><input id="cardNumber" name="cardNumber" data-card-number inputmode="numeric" maxlength="19" required value="4111 1111 1111 1111"><small class="field-help">Demo: 4111 1111 1111 1111</small></div>
+                <div class="payment-field-row"><div class="field"><label for="expiry">Expiry</label><input id="expiry" name="expiry" data-card-expiry inputmode="numeric" maxlength="5" required value="12/30"></div><div class="field"><label for="cvv">CVV</label><input id="cvv" name="cvv" inputmode="numeric" maxlength="3" required value="123"></div></div>
+                <div class="field"><label for="outcome">Demo outcome</label><select id="outcome" name="outcome"><option value="success">Approve payment</option><option value="failure">Decline payment</option></select></div>
+                <button class="button button-primary button-block payment-submit" type="submit"><span class="material-symbols-outlined">lock</span>Pay <span th:text="${'LKR ' + booking.totalAmount}"></span></button>
+            </form>
+            <p class="summary-note">A declined attempt releases the seats. You can retry only if those seats are still available.</p>
+        </aside>
+
+        <aside th:if="${cashPayment}" class="payment-panel cash-panel">
+            <div class="cash-icon"><span class="material-symbols-outlined">payments</span></div><h2>Cash collected at counter</h2><p>Count the customer’s payment and enter the amount received.</p>
+            <form class="payment-form" th:action="@{/bookings/{id}/payment(id=${booking.id})}" method="post" th:attr="data-total=${booking.totalAmount}">
+                <div class="cash-total"><span>Amount due</span><strong th:text="${'LKR ' + booking.totalAmount}"></strong></div>
+                <div class="field"><label for="cashReceived">Cash received (LKR)</label><input id="cashReceived" name="cashReceived" data-cash-received type="number" min="0" step="0.01" th:min="${booking.totalAmount}" th:value="${booking.totalAmount}" required></div>
+                <div class="cash-change"><span>Change to customer</span><strong data-cash-change>LKR 0.00</strong></div>
+                <button class="button button-primary button-block payment-submit" type="submit"><span class="material-symbols-outlined">check_circle</span>Record Cash &amp; Confirm</button>
+            </form>
+            <p class="summary-note">This records a cash transaction in RailConnect. It does not contact a bank or external payment gateway.</p>
+        </aside>
+    </div>
+</section></main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body></html>
