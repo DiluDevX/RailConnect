@@ -16,6 +16,11 @@ the database if needed and starts Spring Boot. Alternatively, run
 [`setup-mysql.sql`](setup-mysql.sql) in MySQL Workbench, then run
 `mvn spring-boot:run` from the project root.
 
+On macOS, make the launcher executable once with `chmod +x
+database/start-macos.command`, then double-click [`start-macos.command`](start-macos.command)
+in Finder. It detects the common Homebrew MySQL locations, creates the database,
+and starts Spring Boot.
+
 Hibernate uses `spring.jpa.hibernate.ddl-auto=update`, so it creates or updates
 tables automatically when the application starts. If your MySQL password is
 different, edit `src/main/resources/application.properties` or set

@@ -72,6 +72,13 @@ disabled in this simple setup; the old migration files remain as reference SQL.
 The full Windows checklist, backup command and optional SQL-dump restore command
 are in [database/README.md](database/README.md).
 
+### macOS one-click setup
+
+On macOS, install and start MySQL, run `chmod +x database/start-macos.command`
+once, then double-click that file in Finder. It creates the `railconnect`
+database and starts the application. The defaults are the same as Windows:
+MySQL `root/root` on port `3306`.
+
 ## Demo accounts
 
 All seeded demo accounts use the password `password`.
