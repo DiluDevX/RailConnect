@@ -7,8 +7,6 @@ import lk.sliit.railconnect.features.booking.domain.PaymentMethod;
 import lk.sliit.railconnect.features.booking.domain.TicketBooking;
 import lk.sliit.railconnect.features.booking.dto.BookingForm;
 import lk.sliit.railconnect.features.booking.service.BookingService;
-import lk.sliit.railconnect.features.booking.service.BookingPdfService;
-import lk.sliit.railconnect.features.booking.service.BookingPaymentService;
 import lk.sliit.railconnect.features.schedule.domain.TrainSchedule;
 import lk.sliit.railconnect.features.schedule.service.ScheduleService;
 import lk.sliit.railconnect.shared.exception.BusinessRuleException;
@@ -24,9 +22,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 
@@ -35,17 +30,12 @@ public class BookingController {
     private final BookingService bookingService;
     private final ScheduleService scheduleService;
     private final CurrentUserService currentUserService;
-    private final BookingPdfService bookingPdfService;
-    private final BookingPaymentService bookingPaymentService;
 
     public BookingController(BookingService bookingService, ScheduleService scheduleService,
-                             CurrentUserService currentUserService, BookingPdfService bookingPdfService,
-                             BookingPaymentService bookingPaymentService) {
+                             CurrentUserService currentUserService) {
         this.bookingService = bookingService;
         this.scheduleService = scheduleService;
         this.currentUserService = currentUserService;
-        this.bookingPdfService = bookingPdfService;
-        this.bookingPaymentService = bookingPaymentService;
     }
 
     @GetMapping("/schedules/{scheduleId}/book")
@@ -126,7 +116,7 @@ public class BookingController {
             }
             successful = "success".equalsIgnoreCase(outcome);
         }
-        TicketBooking booking = bookingPaymentService.processPayment(id, actor, method, successful);
+        TicketBooking booking = bookingService.processPayment(id, actor, method, successful);
         if (successful) {
             String message = method == PaymentMethod.CASH
                     ? "Cash payment recorded. The assisted booking is confirmed."
@@ -162,16 +152,6 @@ public class BookingController {
         model.addAttribute("bookingSeats", bookingService.seatsForBooking(id));
         model.addAttribute("payments", bookingService.paymentsForBooking(id));
         return "features/booking/details";
-    }
-
-    @GetMapping(value = "/bookings/{id}/ticket.pdf", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<byte[]> ticketPdf(@PathVariable Long id, Authentication authentication) {
-        TicketBooking booking = bookingService.requireAccessible(id, currentUserService.require(authentication));
-        byte[] pdf = bookingPdfService.createTicket(booking);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"railconnect-" + booking.getBookingReference() + ".pdf\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdf);
     }
 
     @GetMapping("/my-bookings")

@@ -5,8 +5,8 @@ import lk.sliit.railconnect.auth.domain.UserRole;
 import lk.sliit.railconnect.features.booking.domain.BookingSeat;
 import lk.sliit.railconnect.features.booking.domain.BookingStatus;
 import lk.sliit.railconnect.features.booking.domain.Payment;
-import lk.sliit.railconnect.features.booking.domain.PaymentStatus;
 import lk.sliit.railconnect.features.booking.domain.PaymentMethod;
+import lk.sliit.railconnect.features.booking.domain.PaymentStatus;
 import lk.sliit.railconnect.features.booking.domain.ReservationStatus;
 import lk.sliit.railconnect.features.booking.domain.SeatReservation;
 import lk.sliit.railconnect.features.booking.domain.TicketBooking;
@@ -138,6 +138,42 @@ public class BookingService {
             throw new BusinessRuleException("A selected seat was reserved by another customer. Please choose again.");
         }
         return booking;
+    }
+
+    @Transactional
+    public TicketBooking processPayment(Long bookingId, User actor, PaymentMethod method, boolean successful) {
+        ensureBookingActor(actor);
+        if (actor.getRole() == UserRole.PASSENGER && method != PaymentMethod.SIMULATED_CARD) {
+            throw new BusinessRuleException("Passengers must use the simulated card checkout.");
+        }
+        if (actor.getRole() == UserRole.BOOKING_OFFICER && method != PaymentMethod.CASH) {
+            throw new BusinessRuleException("Booking officers must record an in-person cash payment.");
+        }
+        TicketBooking booking = requireAccessible(bookingId, actor);
+        if (booking.getStatus() != BookingStatus.PENDING_PAYMENT) {
+            throw new BusinessRuleException("This booking is not waiting for payment.");
+        }
+        if (booking.getHoldExpiresAt().isBefore(LocalDateTime.now())) {
+            releaseReservations(booking);
+            booking.expire();
+            throw new BusinessRuleException("The seat hold expired. Retry the booking to check availability again.");
+        }
+        int attempt = Math.toIntExact(paymentRepository.countByBookingId(bookingId) + 1);
+        PaymentStatus status = successful ? PaymentStatus.SUCCEEDED : PaymentStatus.FAILED;
+        paymentRepository.save(new Payment(booking, attempt, booking.getTotalAmount(), status, method,
+                transactionReference(method)));
+        if (successful) {
+            reservationRepository.findByBookingId(bookingId).forEach(SeatReservation::confirm);
+            booking.confirm();
+        } else {
+            releaseReservations(booking);
+            booking.markPaymentFailed();
+        }
+        return booking;
+    }
+
+    public TicketBooking processSimulatedPayment(Long bookingId, User actor, boolean successful) {
+        return processPayment(bookingId, actor, PaymentMethod.SIMULATED_CARD, successful);
     }
 
     @Transactional
