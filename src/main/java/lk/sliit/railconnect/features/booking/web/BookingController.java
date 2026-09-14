@@ -8,6 +8,7 @@ import lk.sliit.railconnect.features.booking.domain.TicketBooking;
 import lk.sliit.railconnect.features.booking.dto.BookingForm;
 import lk.sliit.railconnect.features.booking.service.BookingService;
 import lk.sliit.railconnect.features.booking.service.BookingPdfService;
+import lk.sliit.railconnect.features.booking.service.BookingPaymentService;
 import lk.sliit.railconnect.features.schedule.domain.TrainSchedule;
 import lk.sliit.railconnect.features.schedule.service.ScheduleService;
 import lk.sliit.railconnect.shared.exception.BusinessRuleException;
@@ -35,13 +36,16 @@ public class BookingController {
     private final ScheduleService scheduleService;
     private final CurrentUserService currentUserService;
     private final BookingPdfService bookingPdfService;
+    private final BookingPaymentService bookingPaymentService;
 
     public BookingController(BookingService bookingService, ScheduleService scheduleService,
-                             CurrentUserService currentUserService, BookingPdfService bookingPdfService) {
+                             CurrentUserService currentUserService, BookingPdfService bookingPdfService,
+                             BookingPaymentService bookingPaymentService) {
         this.bookingService = bookingService;
         this.scheduleService = scheduleService;
         this.currentUserService = currentUserService;
         this.bookingPdfService = bookingPdfService;
+        this.bookingPaymentService = bookingPaymentService;
     }
 
     @GetMapping("/schedules/{scheduleId}/book")
@@ -122,7 +126,7 @@ public class BookingController {
             }
             successful = "success".equalsIgnoreCase(outcome);
         }
-        TicketBooking booking = bookingService.processPayment(id, actor, method, successful);
+        TicketBooking booking = bookingPaymentService.processPayment(id, actor, method, successful);
         if (successful) {
             String message = method == PaymentMethod.CASH
                     ? "Cash payment recorded. The assisted booking is confirmed."

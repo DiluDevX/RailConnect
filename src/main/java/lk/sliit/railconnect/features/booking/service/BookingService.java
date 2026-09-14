@@ -53,7 +53,6 @@ public class BookingService {
     private final PaymentRepository paymentRepository;
     private final SeatRepository seatRepository;
     private final ScheduleService scheduleService;
-    private final NotificationService notificationService;
     private final long holdMinutes;
 
     public BookingService(TicketBookingRepository bookingRepository,
@@ -62,7 +61,6 @@ public class BookingService {
                           PaymentRepository paymentRepository,
                           SeatRepository seatRepository,
                           ScheduleService scheduleService,
-                          NotificationService notificationService,
                           @Value("${railconnect.booking.hold-minutes:10}") long holdMinutes) {
         this.bookingRepository = bookingRepository;
         this.bookingSeatRepository = bookingSeatRepository;
@@ -70,7 +68,6 @@ public class BookingService {
         this.paymentRepository = paymentRepository;
         this.seatRepository = seatRepository;
         this.scheduleService = scheduleService;
-        this.notificationService = notificationService;
         this.holdMinutes = holdMinutes;
     }
 
@@ -144,43 +141,6 @@ public class BookingService {
     }
 
     @Transactional
-    public TicketBooking processPayment(Long bookingId, User actor, PaymentMethod method, boolean successful) {
-        ensureBookingActor(actor);
-        if (actor.getRole() == UserRole.PASSENGER && method != PaymentMethod.SIMULATED_CARD) {
-            throw new BusinessRuleException("Passengers must use the simulated card checkout.");
-        }
-        if (actor.getRole() == UserRole.BOOKING_OFFICER && method != PaymentMethod.CASH) {
-            throw new BusinessRuleException("Booking officers must record an in-person cash payment.");
-        }
-        TicketBooking booking = requireAccessible(bookingId, actor);
-        if (booking.getStatus() != BookingStatus.PENDING_PAYMENT) {
-            throw new BusinessRuleException("This booking is not waiting for payment.");
-        }
-        if (booking.getHoldExpiresAt().isBefore(LocalDateTime.now())) {
-            releaseReservations(booking);
-            booking.expire();
-            throw new BusinessRuleException("The seat hold expired. Retry the booking to check availability again.");
-        }
-        int attempt = Math.toIntExact(paymentRepository.countByBookingId(bookingId) + 1);
-        PaymentStatus status = successful ? PaymentStatus.SUCCEEDED : PaymentStatus.FAILED;
-        paymentRepository.save(new Payment(booking, attempt, booking.getTotalAmount(), status, method, transactionReference(method)));
-        if (successful) {
-            reservationRepository.findByBookingId(bookingId).forEach(SeatReservation::confirm);
-            booking.confirm();
-            notificationService.bookingConfirmed(booking);
-        } else {
-            releaseReservations(booking);
-            booking.markPaymentFailed();
-        }
-        return booking;
-    }
-
-    @Transactional
-    public TicketBooking processSimulatedPayment(Long bookingId, User actor, boolean successful) {
-        return processPayment(bookingId, actor, PaymentMethod.SIMULATED_CARD, successful);
-    }
-
-    @Transactional
     public TicketBooking retry(Long bookingId, User actor) {
         TicketBooking booking = requireAccessible(bookingId, actor);
         if (booking.getStatus() != BookingStatus.PAYMENT_FAILED && booking.getStatus() != BookingStatus.EXPIRED) {
@@ -208,7 +168,6 @@ public class BookingService {
                 .ifPresent(Payment::refund);
         releaseReservations(booking);
         booking.cancel();
-        notificationService.bookingCancelled(booking);
     }
 
     @Transactional(readOnly = true)

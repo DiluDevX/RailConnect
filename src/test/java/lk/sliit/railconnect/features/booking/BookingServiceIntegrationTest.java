@@ -10,6 +10,7 @@ import lk.sliit.railconnect.features.booking.domain.TicketBooking;
 import lk.sliit.railconnect.features.booking.dto.BookingForm;
 import lk.sliit.railconnect.features.booking.repository.PaymentRepository;
 import lk.sliit.railconnect.features.booking.service.BookingService;
+import lk.sliit.railconnect.features.booking.service.BookingPaymentService;
 import lk.sliit.railconnect.features.carriage.domain.CarriageClass;
 import lk.sliit.railconnect.features.carriage.dto.CarriageForm;
 import lk.sliit.railconnect.features.carriage.repository.SeatRepository;
@@ -40,6 +41,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @Transactional
 class BookingServiceIntegrationTest {
     @Autowired BookingService bookingService;
+    @Autowired BookingPaymentService bookingPaymentService;
     @Autowired CarriageService carriageService;
     @Autowired UserRepository userRepository;
     @Autowired TrainRepository trainRepository;
@@ -73,7 +75,7 @@ class BookingServiceIntegrationTest {
         TicketBooking pending = bookingService.startBooking(passenger, schedule.getId(), bookingForm());
         Long originalId = pending.getId();
 
-        TicketBooking confirmed = bookingService.processSimulatedPayment(originalId, passenger, true);
+        TicketBooking confirmed = bookingPaymentService.processSimulatedPayment(originalId, passenger, true);
 
         assertThat(confirmed.getId()).isEqualTo(originalId);
         assertThat(confirmed.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
@@ -86,7 +88,7 @@ class BookingServiceIntegrationTest {
     @Test
     void failedPaymentReleasesSeatAndRetryReusesBooking() {
         TicketBooking booking = bookingService.startBooking(passenger, schedule.getId(), bookingForm());
-        bookingService.processSimulatedPayment(booking.getId(), passenger, false);
+        bookingPaymentService.processSimulatedPayment(booking.getId(), passenger, false);
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.PAYMENT_FAILED);
 
         TicketBooking retried = bookingService.retry(booking.getId(), passenger);
@@ -106,7 +108,7 @@ class BookingServiceIntegrationTest {
         assistedForm.setContactPhone("0755555555");
         TicketBooking booking = bookingService.startBooking(officer, schedule.getId(), assistedForm);
 
-        TicketBooking confirmed = bookingService.processPayment(booking.getId(), officer, PaymentMethod.CASH, true);
+        TicketBooking confirmed = bookingPaymentService.processPayment(booking.getId(), officer, PaymentMethod.CASH, true);
 
         assertThat(confirmed.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
         assertThat(paymentRepository.findByBookingIdOrderByAttemptNumber(booking.getId()))
