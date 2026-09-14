@@ -26,8 +26,10 @@ tables automatically when the application starts. If your MySQL password is
 different, edit `src/main/resources/application.properties` or set
 `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` before starting the app.
 
-Flyway is disabled for this simple setup. The migration files remain as
-historical/reference SQL and are not required for a fresh local database.
+Flyway runs after the database is created and automatically applies the schema
+and demo-data migrations. This seeds the demo users, trains, routes, carriages,
+seats, schedules, bookings, payments, and complaints on a fresh database.
+Hibernate remains in `update` mode to match the simple Vehicle Rental setup.
 
 The canonical MySQL schema and demo data are versioned Flyway migrations in:
 
