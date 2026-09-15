@@ -8,7 +8,9 @@ import lk.sliit.railconnect.features.booking.domain.PaymentStatus;
 import lk.sliit.railconnect.features.booking.domain.PaymentMethod;
 import lk.sliit.railconnect.features.booking.domain.TicketBooking;
 import lk.sliit.railconnect.features.booking.dto.BookingForm;
+import lk.sliit.railconnect.features.booking.dto.AdminBookingForm;
 import lk.sliit.railconnect.features.booking.repository.PaymentRepository;
+import lk.sliit.railconnect.features.booking.repository.TicketBookingRepository;
 import lk.sliit.railconnect.features.booking.service.BookingService;
 import lk.sliit.railconnect.features.carriage.domain.CarriageClass;
 import lk.sliit.railconnect.features.carriage.dto.CarriageForm;
@@ -47,6 +49,7 @@ class BookingServiceIntegrationTest {
     @Autowired TrainScheduleRepository scheduleRepository;
     @Autowired SeatRepository seatRepository;
     @Autowired PaymentRepository paymentRepository;
+    @Autowired TicketBookingRepository ticketBookingRepository;
 
     private User passenger;
     private TrainSchedule schedule;
@@ -121,6 +124,23 @@ class BookingServiceIntegrationTest {
         bookingService.cancel(booking.getId(), passenger);
 
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
+    }
+
+    @Test
+    void bookingStaffCanUpdateAndDeleteCustomerBooking() {
+        User officer = userRepository.save(new User("Booking Officer", "crud-officer@example.com", "encoded",
+                "0711111111", UserRole.BOOKING_OFFICER));
+        TicketBooking booking = bookingService.startBooking(passenger, schedule.getId(), bookingForm());
+
+        AdminBookingForm edit = new AdminBookingForm();
+        edit.setPassengerName("Updated Customer");
+        edit.setContactEmail("updated@example.com");
+        edit.setContactPhone("0755555555");
+        bookingService.updateByStaff(booking.getId(), officer, edit);
+        assertThat(booking.getPassengerName()).isEqualTo("Updated Customer");
+
+        bookingService.deleteByStaff(booking.getId(), officer);
+        assertThat(ticketBookingRepository.findById(booking.getId())).isEmpty();
     }
 
     @Test

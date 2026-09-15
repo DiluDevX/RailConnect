@@ -11,6 +11,7 @@ import lk.sliit.railconnect.features.booking.domain.ReservationStatus;
 import lk.sliit.railconnect.features.booking.domain.SeatReservation;
 import lk.sliit.railconnect.features.booking.domain.TicketBooking;
 import lk.sliit.railconnect.features.booking.dto.BookingForm;
+import lk.sliit.railconnect.features.booking.dto.AdminBookingForm;
 import lk.sliit.railconnect.features.booking.dto.SeatOption;
 import lk.sliit.railconnect.features.booking.dto.CarriageSeatGroup;
 import lk.sliit.railconnect.features.booking.repository.BookingSeatRepository;
@@ -234,6 +235,30 @@ public class BookingService {
         return paymentRepository.findByBookingIdOrderByAttemptNumber(bookingId);
     }
 
+    @Transactional
+    public TicketBooking updateByStaff(Long bookingId, User actor, AdminBookingForm form) {
+        ensureStaff(actor);
+        TicketBooking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking was not found."));
+        String name = form.getPassengerName().trim();
+        if (name.isBlank()) {
+            throw new BusinessRuleException("Passenger name is required.");
+        }
+        booking.updatePassengerDetails(name, clean(form.getContactEmail()), clean(form.getContactPhone()));
+        return booking;
+    }
+
+    @Transactional
+    public void deleteByStaff(Long bookingId, User actor) {
+        ensureStaff(actor);
+        TicketBooking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking was not found."));
+        reservationRepository.deleteAll(reservationRepository.findByBookingId(bookingId));
+        bookingSeatRepository.deleteAll(bookingSeatRepository.findByBookingIdOrderBySeatCarriageCarriageNumberAscSeatSeatNumberAsc(bookingId));
+        paymentRepository.deleteAll(paymentRepository.findByBookingIdOrderByAttemptNumber(bookingId));
+        bookingRepository.delete(booking);
+    }
+
     private void holdSeat(TrainSchedule schedule, Seat seat, TicketBooking booking, LocalDateTime expiresAt) {
         SeatReservation reservation = reservationRepository.lockForScheduleAndSeat(schedule.getId(), seat.getId()).orElse(null);
         if (reservation == null) {
@@ -281,6 +306,16 @@ public class BookingService {
         if (actor.getRole() != UserRole.PASSENGER && actor.getRole() != UserRole.BOOKING_OFFICER) {
             throw new BusinessRuleException("Only passengers and booking officers can create or pay for bookings.");
         }
+    }
+
+    private void ensureStaff(User actor) {
+        if (actor.getRole() != UserRole.BOOKING_OFFICER && actor.getRole() != UserRole.RAILWAY_ADMIN) {
+            throw new BusinessRuleException("Only booking staff can manage booking records.");
+        }
+    }
+
+    private String clean(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private String transactionReference(PaymentMethod method) {

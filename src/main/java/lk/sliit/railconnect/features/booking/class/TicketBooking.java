@@ -81,4 +81,9 @@ public class TicketBooking extends BaseEntity {
     public void confirm() { this.status = BookingStatus.CONFIRMED; }
     public void cancel() { this.status = BookingStatus.CANCELLED; }
     public void expire() { this.status = BookingStatus.EXPIRED; }
+    public void updatePassengerDetails(String passengerName, String contactEmail, String contactPhone) {
+        this.passengerName = passengerName;
+        this.contactEmail = contactEmail;
+        this.contactPhone = contactPhone;
+    }
 }
