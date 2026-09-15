@@ -114,6 +114,16 @@ class BookingServiceIntegrationTest {
     }
 
     @Test
+    void confirmedFutureBookingCanBeCancelled() {
+        TicketBooking booking = bookingService.startBooking(passenger, schedule.getId(), bookingForm());
+        bookingService.processSimulatedPayment(booking.getId(), passenger, true);
+
+        bookingService.cancel(booking.getId(), passenger);
+
+        assertThat(booking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
+    }
+
+    @Test
     void administratorCannotCreateCustomerBooking() {
         User administrator = userRepository.save(new User("Test Admin", "admin-test@example.com", "encoded",
                 "0700000000", UserRole.RAILWAY_ADMIN));
