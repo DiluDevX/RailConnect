@@ -60,11 +60,17 @@ packages give clear ownership while preserving one reliable transaction boundary
 # Complaint module compatibility
 
 The running Spring Boot application uses `lk.sliit.railconnect.features.complaint`
-and its MySQL-backed repository. The older `com.railway.complaintmanagement`
-module is retained as the member's standalone source; its in-memory DAO and
-static `complaints.html` are not the integrated application workflow.
+and its MySQL-backed repository. The member's newer complaint implementation
+has been consolidated into this package; duplicate legacy classes were removed
+and remain recoverable in Git history. Static `complaints.html` is not the
+integrated application workflow.
 
 `ComplaintEvent` and `ComplaintEventType` are compiled event contracts in the
-active complaint domain package. No event publisher or listener is implemented
-yet, so these contracts alone are not an Observer-pattern implementation.
+active complaint domain package. `ComplaintService` publishes lifecycle events
+through Spring's `ApplicationEventPublisher`. Two implementations of
+`ComplaintObserver` receive them with `@TransactionalEventListener(AFTER_COMMIT)`:
+`ComplaintAuditObserver` logs reference/event/status and
+`ComplaintNotificationObserver` logs a simulated notification. Rolled-back changes
+do not trigger either observer. This is the Observer pattern through Spring events;
+it does not send real emails or persist a separate audit-history table.
 Generated `target/` files must remain untracked; Maven recreates them.

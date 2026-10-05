@@ -5,12 +5,15 @@ import lk.sliit.railconnect.auth.domain.UserRole;
 import lk.sliit.railconnect.features.booking.domain.TicketBooking;
 import lk.sliit.railconnect.features.booking.service.BookingService;
 import lk.sliit.railconnect.features.complaint.domain.Complaint;
+import lk.sliit.railconnect.features.complaint.domain.ComplaintEvent;
+import lk.sliit.railconnect.features.complaint.domain.ComplaintEventType;
 import lk.sliit.railconnect.features.complaint.domain.ComplaintStatus;
 import lk.sliit.railconnect.features.complaint.dto.ComplaintForm;
 import lk.sliit.railconnect.features.complaint.repository.ComplaintRepository;
 import lk.sliit.railconnect.shared.exception.BusinessRuleException;
 import lk.sliit.railconnect.shared.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -21,10 +24,13 @@ import java.util.UUID;
 public class ComplaintService {
     private final ComplaintRepository complaintRepository;
     private final BookingService bookingService;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public ComplaintService(ComplaintRepository complaintRepository, BookingService bookingService) {
+    public ComplaintService(ComplaintRepository complaintRepository, BookingService bookingService,
+                            ApplicationEventPublisher eventPublisher) {
         this.complaintRepository = complaintRepository;
         this.bookingService = bookingService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -32,7 +38,9 @@ public class ComplaintService {
         TicketBooking booking = form.getBookingId() == null ? null : bookingService.requireAccessible(form.getBookingId(), user);
         Complaint complaint = new Complaint(newReference(), user, booking, form.getComplaintType(),
                 form.getSubject().trim(), form.getDescription().trim());
-        return complaintRepository.save(complaint);
+        Complaint saved = complaintRepository.save(complaint);
+        publishComplaintEvent(saved, ComplaintEventType.SUBMITTED);
+        return saved;
     }
 
     @Transactional
@@ -42,6 +50,7 @@ public class ComplaintService {
             throw new BusinessRuleException("Only open complaints can be edited.");
         }
         complaint.updateByPassenger(form.getComplaintType(), form.getSubject().trim(), form.getDescription().trim());
+        publishComplaintEvent(complaint, ComplaintEventType.UPDATED);
         return complaint;
     }
 
@@ -52,6 +61,7 @@ public class ComplaintService {
             throw new BusinessRuleException("Only open complaints can be withdrawn.");
         }
         complaint.withdraw();
+        publishComplaintEvent(complaint, ComplaintEventType.WITHDRAWN);
     }
 
     @Transactional
@@ -61,6 +71,7 @@ public class ComplaintService {
             throw new BusinessRuleException("Enter a response before updating the complaint.");
         }
         complaint.respond(status, response.trim());
+        publishComplaintEvent(complaint, ComplaintEventType.RESPONDED);
     }
 
     @Transactional(readOnly = true)
@@ -86,5 +97,10 @@ public class ComplaintService {
 
     private String newReference() {
         return "CMP-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT);
+    }
+
+    private void publishComplaintEvent(Complaint complaint, ComplaintEventType eventType) {
+        eventPublisher.publishEvent(new ComplaintEvent(complaint.getId(), complaint.getComplaintReference(),
+                complaint.getUser().getId(), eventType, complaint.getStatus(), complaint.getSubject()));
     }
 }
