@@ -52,3 +52,4 @@ Six separately deployed services would require API versioning, distributed
 transactions, service discovery, more Docker containers and failure recovery.
 That complexity would distract from the assessed Java/OOP/database work. Feature
 packages give clear ownership while preserving one reliable transaction boundary.
+
