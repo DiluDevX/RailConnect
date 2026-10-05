@@ -1,5 +1,14 @@
 # Database setup
 
+## Expanded booking demo data
+
+Migration V8 adds nine clearly labelled demo trains, 27 carriages, 540 seats and
+270 schedules (three services per route daily for 30 days, starting tomorrow).
+Routes: Colombo Fort to Kandy, Colombo Fort to Galle, and Kandy to Colombo Fort.
+It does not insert customer records, bookings, payments or complaints. The dates
+are calculated once when V8 first runs; restarting does not keep adding data.
+Select tomorrow's date and one of these routes for a quick booking demonstration.
+
 ## Simple local setup (Vehicle Rental-style)
 
 RailConnect supports the same straightforward local setup as the team's
