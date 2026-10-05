@@ -1,4 +1,4 @@
-package com.railway.complaintmanagement.model;
+package lk.sliit.railconnect.features.complaint.domain;
 
 public enum ComplaintStatus {
     OPEN,
