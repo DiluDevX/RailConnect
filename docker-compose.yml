@@ -1,0 +1,23 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: railconnect-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: railconnect
+      MYSQL_USER: railconnect
+      MYSQL_PASSWORD: railconnect_dev
+      MYSQL_ROOT_PASSWORD: railconnect_root_dev
+      TZ: Asia/Colombo
+    ports:
+      - "3307:3306"
+    volumes:
+      - railconnect_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prailconnect_root_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  railconnect_mysql_data:
