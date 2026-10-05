@@ -9,8 +9,7 @@
     <nav class="booking-progress" aria-label="Booking progress"><span class="complete"><b>1</b>Search</span><span class="complete"><b>2</b>Seats</span><span class="complete"><b>3</b>Payment</span><span class="current" aria-current="step"><b>4</b>Ticket</span></nav>
     <header class="page-header">
         <div><h1 th:text="${'Booking ' + booking.bookingReference}"></h1><p>Booking record and printable ticket.</p></div>
-        <a class="button button-secondary no-print" th:if="${bookingOfficer}" href="#" onclick="window.print(); return false;"><span class="material-symbols-outlined">print</span> Print ticket(s)</a>
-        <a class="button button-secondary no-print" th:unless="${bookingOfficer}" th:href="@{/bookings/{id}/ticket.pdf(id=${booking.id})}" download><span class="material-symbols-outlined">download</span> Download E-ticket PDF</a>
+        <a class="button button-secondary no-print" href="#" onclick="window.print(); return false;"><span class="material-symbols-outlined">print</span><span th:text="${bookingOfficer ? 'Print ticket(s)' : 'Print ticket'}"></span></a>
     </header>
     <div class="booking-layout">
         <section class="card">
