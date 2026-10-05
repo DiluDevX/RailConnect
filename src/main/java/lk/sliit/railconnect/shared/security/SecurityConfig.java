@@ -36,7 +36,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/", "/login", "/register", "/search", "/forgot-password", "/reset-password", "/favicon.svg", "/css/**", "/js/**", "/images/**", "/error").permitAll()
-                        .requestMatchers("/admin/trains/**", "/admin/routes/**", "/admin/schedules/**", "/admin/carriages/**")
+                        .requestMatchers("/admin/trains/**", "/admin/maintenance/**", "/admin/routes/**", "/admin/schedules/**", "/admin/carriages/**")
                         .hasRole("RAILWAY_ADMIN")
                         .requestMatchers("/admin/complaints/**", "/admin/bookings/**", "/admin/**")
                         .hasAnyRole("BOOKING_OFFICER", "RAILWAY_ADMIN")
