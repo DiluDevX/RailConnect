@@ -52,8 +52,7 @@ public class TrainService {
     public Train create(TrainForm form) {
         String trainNumber = requireTrainNumber(form.getTrainNumber(), null);
         Train train = new Train(trainNumber, form.getTrainName().trim(), clean(form.getDescription()));
-        train.update(train.getTrainNumber(), train.getTrainName(), train.getDescription(), form.getFirstClassFare(),
-                form.getSecondClassFare(), form.getThirdClassFare(), TrainStatus.ACTIVE);
+        train.update(train.getTrainNumber(), train.getTrainName(), train.getDescription(), TrainStatus.ACTIVE);
         return trainRepository.save(train);
     }
 
@@ -61,8 +60,7 @@ public class TrainService {
     public Train update(Long id, TrainForm form) {
         Train train = require(id);
         String trainNumber = requireTrainNumber(form.getTrainNumber(), id);
-        train.update(trainNumber, form.getTrainName().trim(), clean(form.getDescription()),
-                form.getFirstClassFare(), form.getSecondClassFare(), form.getThirdClassFare(), form.getStatus());
+        train.update(trainNumber, form.getTrainName().trim(), clean(form.getDescription()), form.getStatus());
         return train;
     }
 
@@ -70,22 +68,19 @@ public class TrainService {
     public void toggleActive(Long id) {
         Train train = require(id);
         TrainStatus next = train.getStatus() == TrainStatus.INACTIVE ? TrainStatus.ACTIVE : TrainStatus.INACTIVE;
-        train.update(train.getTrainNumber(), train.getTrainName(), train.getDescription(), train.getFirstClassFare(),
-                train.getSecondClassFare(), train.getThirdClassFare(), next);
+        train.update(train.getTrainNumber(), train.getTrainName(), train.getDescription(), next);
     }
 
     @Transactional
     public void activate(Long id) {
         Train train = require(id);
-        train.update(train.getTrainNumber(), train.getTrainName(), train.getDescription(), train.getFirstClassFare(),
-                train.getSecondClassFare(), train.getThirdClassFare(), TrainStatus.ACTIVE);
+        train.update(train.getTrainNumber(), train.getTrainName(), train.getDescription(), TrainStatus.ACTIVE);
     }
 
     @Transactional
     public void deactivate(Long id) {
         Train train = require(id);
-        train.update(train.getTrainNumber(), train.getTrainName(), train.getDescription(), train.getFirstClassFare(),
-                train.getSecondClassFare(), train.getThirdClassFare(), TrainStatus.INACTIVE);
+        train.update(train.getTrainNumber(), train.getTrainName(), train.getDescription(), TrainStatus.INACTIVE);
     }
 
     @Transactional(readOnly = true)

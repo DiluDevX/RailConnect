@@ -27,12 +27,8 @@
                             <dd><span class="status" th:classappend="${'status-' + #strings.toLowerCase(train.status)}" th:text="${train.status}"></span></dd>
                             <dt>Active capacity</dt>
                             <dd th:text="${capacity + ' seats'}">0 seats</dd>
-                            <dt>First class fare</dt>
-                            <dd th:text="${train.firstClassFare == null ? 'Uses schedule fare' : 'LKR ' + train.firstClassFare}">LKR 0</dd>
-                            <dt>Second class fare</dt>
-                            <dd th:text="${train.secondClassFare == null ? 'Uses schedule fare' : 'LKR ' + train.secondClassFare}">LKR 0</dd>
-                            <dt>Third class fare</dt>
-                            <dd th:text="${train.thirdClassFare == null ? 'Uses schedule fare' : 'LKR ' + train.thirdClassFare}">LKR 0</dd>
+                            <dt>Pricing model</dt>
+                            <dd>Set per schedule by class</dd>
                         </dl>
                         <div class="form-actions" style="justify-content:flex-start">
                             <form th:if="${train.status.name() == 'INACTIVE'}" th:action="@{/admin/trains/{id}/activate(id=${train.id})}" method="post">

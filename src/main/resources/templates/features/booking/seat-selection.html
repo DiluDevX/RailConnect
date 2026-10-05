@@ -6,7 +6,7 @@
 <main><section class="section booking-page">
     <nav class="booking-progress" aria-label="Booking progress"><span class="complete"><b>1</b>Search</span><span class="current" aria-current="step"><b>2</b>Seats</span><span><b>3</b>Payment</span><span><b>4</b>Ticket</span></nav>
     <header class="page-header"><div><p class="eyebrow">Choose your carriage</p><h1>Seat Selection &amp; Booking</h1><p th:text="${schedule.train.trainName + ' (' + schedule.train.trainNumber + ') · ' + schedule.route.startStation + ' → ' + schedule.route.endStation + ' · ' + #temporals.format(schedule.travelDate, 'dd MMM yyyy') + ', ' + #temporals.format(schedule.departureTime, 'HH:mm')}"></p></div></header>
-    <form th:action="@{/schedules/{id}/book(id=${schedule.id})}" th:object="${bookingForm}" method="post" th:attr="data-base-fare=${schedule.baseFare}">
+    <form th:action="@{/schedules/{id}/book(id=${schedule.id})}" th:object="${bookingForm}" method="post">
         <div th:if="${#fields.hasGlobalErrors()}" class="form-errors" th:each="error : ${#fields.globalErrors()}" th:text="${error}"></div>
         <div class="booking-layout">
             <section class="seat-panel">
