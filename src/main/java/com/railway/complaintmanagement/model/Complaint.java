@@ -1,53 +1,73 @@
-package com.railway.complaintmanagement.model;
+package lk.sliit.railconnect.features.complaint.domain;
 
-import java.util.Objects;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lk.sliit.railconnect.auth.domain.User;
+import lk.sliit.railconnect.features.booking.domain.TicketBooking;
+import lk.sliit.railconnect.shared.domain.BaseEntity;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
-public class Complaint {
-    private String complaintId;
-    private String userId;
-    private Long bookingId;
+@Entity
+@Table(name = "complaints")
+public class Complaint extends BaseEntity {
+    @Column(nullable = false, unique = true, length = 30)
+    private String complaintReference;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "booking_id")
+    private TicketBooking booking;
+
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(nullable = false, length = 30)
     private ComplaintType complaintType;
+
+    @Column(nullable = false, length = 160)
     private String subject;
+
+    @Column(nullable = false, length = 2000)
     private String description;
-    private String status = ComplaintStatus.OPEN.name();
+
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(nullable = false, length = 30)
+    private ComplaintStatus status = ComplaintStatus.OPEN;
+
+    @Column(length = 2000)
     private String adminResponse;
 
-    public Complaint() {
+    protected Complaint() {
     }
 
-    public Complaint(String complaintId, String userId, Long bookingId,
-                    ComplaintType complaintType, String subject, String description) {
-        this.complaintId = complaintId;
-        this.userId = userId;
-        this.bookingId = bookingId;
+    public Complaint(String complaintReference, User user, TicketBooking booking, ComplaintType complaintType,
+                     String subject, String description) {
+        this.complaintReference = complaintReference;
+        this.user = user;
+        this.booking = booking;
         this.complaintType = complaintType;
         this.subject = subject;
         this.description = description;
     }
 
-    public String getComplaintId() { return complaintId; }
-    public void setComplaintId(String complaintId) { this.complaintId = complaintId; }
-
-    public String getUserId() { return userId; }
-    public void setUserId(String userId) { this.userId = userId; }
-
-    public Long getBookingId() { return bookingId; }
-    public void setBookingId(Long bookingId) { this.bookingId = bookingId; }
-
+    public String getComplaintReference() { return complaintReference; }
+    public User getUser() { return user; }
+    public TicketBooking getBooking() { return booking; }
     public ComplaintType getComplaintType() { return complaintType; }
-    public void setComplaintType(ComplaintType complaintType) { this.complaintType = complaintType; }
-
     public String getSubject() { return subject; }
-    public void setSubject(String subject) { this.subject = subject; }
-
     public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-
+    public ComplaintStatus getStatus() { return status; }
     public String getAdminResponse() { return adminResponse; }
-    public void setAdminResponse(String adminResponse) { this.adminResponse = adminResponse; }
 
     public void updateByPassenger(ComplaintType type, String subject, String description) {
         this.complaintType = type;
@@ -55,35 +75,12 @@ public class Complaint {
         this.description = description;
     }
 
-    public void respond(String status, String response) {
+    public void respond(ComplaintStatus status, String response) {
         this.status = status;
         this.adminResponse = response;
     }
 
     public void withdraw() {
-        this.status = ComplaintStatus.WITHDRAWN.name();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Complaint complaint = (Complaint) o;
-        return Objects.equals(complaintId, complaint.complaintId);
-    }
-
-    @Override
-    public int hashCode() { return Objects.hash(complaintId); }
-
-    @Override
-    public String toString() {
-        return "Complaint{" +
-                "complaintId='" + complaintId + '\'' +
-                ", userId='" + userId + '\'' +
-                ", bookingId=" + bookingId +
-                ", complaintType=" + complaintType +
-                ", subject='" + subject + '\'' +
-                ", status='" + status + '\'' +
-                '}';
+        this.status = ComplaintStatus.WITHDRAWN;
     }
 }
