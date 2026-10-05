@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Train Details')}"></head>
+<body>
+<div class="admin-shell">
+    <aside th:replace="~{fragments/layout :: adminSidebar('trains')}"></aside>
+    <main class="admin-main">
+        <header th:replace="~{fragments/layout :: adminTopbar('Train Details')}"></header>
+        <div th:replace="~{fragments/layout :: flash}"></div>
+        <div class="admin-content">
+            <header class="page-header">
+                <div>
+                    <h1 th:text="${train.trainNumber + ' · ' + train.trainName}">Train</h1>
+                    <p th:text="${train.description ?: 'No description recorded.'}">Description</p>
+                </div>
+                <div class="toolbar">
+                    <a class="button button-secondary" th:href="@{/admin/trains}">All trains</a>
+                    <a class="button button-secondary" th:href="@{/admin/trains/{id}/edit(id=${train.id})}">Edit</a>
+                    <a class="button button-primary" th:href="@{/admin/maintenance/new(trainId=${train.id})}">Add maintenance</a>
+                </div>
+            </header>
+            <div class="booking-layout">
+                <section class="card">
+                    <div class="card-body">
+                        <dl class="detail-list">
+                            <dt>Status</dt>
+                            <dd><span class="status" th:classappend="${'status-' + #strings.toLowerCase(train.status)}" th:text="${train.status}"></span></dd>
+                            <dt>Active capacity</dt>
+                            <dd th:text="${capacity + ' seats'}">0 seats</dd>
+                            <dt>First class fare</dt>
+                            <dd th:text="${train.firstClassFare == null ? 'Uses schedule fare' : 'LKR ' + train.firstClassFare}">LKR 0</dd>
+                            <dt>Second class fare</dt>
+                            <dd th:text="${train.secondClassFare == null ? 'Uses schedule fare' : 'LKR ' + train.secondClassFare}">LKR 0</dd>
+                            <dt>Third class fare</dt>
+                            <dd th:text="${train.thirdClassFare == null ? 'Uses schedule fare' : 'LKR ' + train.thirdClassFare}">LKR 0</dd>
+                        </dl>
+                        <div class="form-actions" style="justify-content:flex-start">
+                            <form th:if="${train.status.name() == 'INACTIVE'}" th:action="@{/admin/trains/{id}/activate(id=${train.id})}" method="post">
+                                <button class="button button-primary" type="submit">Activate</button>
+                            </form>
+                            <form th:if="${train.status.name() != 'INACTIVE'}" th:action="@{/admin/trains/{id}/deactivate(id=${train.id})}" method="post" data-confirm="Deactivate this train? Existing bookings and maintenance history will be preserved.">
+                                <button class="button button-danger" type="submit">Deactivate</button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+                <aside class="booking-summary">
+                    <h2>Maintenance</h2>
+                    <p>These records belong to this train. They do not change schedules or seat inventory by themselves.</p>
+                    <a class="button button-secondary button-block" th:href="@{/admin/maintenance(trainId=${train.id})}">View filtered list</a>
+                </aside>
+            </div>
+            <h2 style="margin:28px 0 14px">Maintenance history</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Type</th><th>Date</th><th>Description</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                    <tr th:each="record : ${maintenanceHistory}">
+                        <td th:text="${record.maintenanceType}">Engine service</td>
+                        <td th:text="${#temporals.format(record.maintenanceDate, 'dd MMM yyyy')}">01 Jan 2026</td>
+                        <td th:text="${record.description ?: '—'}">Notes</td>
+                        <td><span class="status" th:classappend="${'status-' + #strings.toLowerCase(record.status)}" th:text="${record.status}"></span></td>
+                        <td class="actions"><a th:href="@{/admin/maintenance/{id}/edit(id=${record.id})}">Edit</a></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(maintenanceHistory)}"><td colspan="5"><div class="empty-state">No maintenance history for this train.</div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+</body>
+</html>
