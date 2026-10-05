@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title + ' | RailConnect'}">RailConnect</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <script>try{document.documentElement.dataset.theme=localStorage.getItem('railconnect-theme')||'light'}catch(e){}</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/railconnect.css}">
+    <script defer th:src="@{/js/app.js}"></script>
+</head>
+<body>
+<header th:fragment="publicHeader(active)" class="public-header">
+    <a class="brand" th:href="@{/}"><span class="brand-mark"><span class="material-symbols-outlined">train</span></span><span>RailConnect</span></a>
+    <nav class="public-nav" aria-label="Main navigation">
+        <a class="nav-link" th:classappend="${active == 'home'} ? 'active'" th:href="@{/}"><span class="material-symbols-outlined">home</span>Home</a>
+        <a class="nav-link" th:classappend="${active == 'search'} ? 'active'" sec:authorize="isAnonymous() or hasAnyRole('PASSENGER','BOOKING_OFFICER')" th:href="@{/search}"><span class="material-symbols-outlined">search</span>Search</a>
+        <a class="nav-link" th:classappend="${active == 'bookings'} ? 'active'" sec:authorize="hasRole('PASSENGER')" th:href="@{/my-bookings}"><span class="material-symbols-outlined">confirmation_number</span>My Bookings</a>
+        <a class="nav-link" th:classappend="${active == 'complaints'} ? 'active'" sec:authorize="hasRole('PASSENGER')" th:href="@{/my-complaints}"><span class="material-symbols-outlined">support_agent</span>My Complaints</a>
+        <a class="nav-link" th:classappend="${active == 'admin'} ? 'active'" sec:authorize="hasAnyRole('BOOKING_OFFICER','RAILWAY_ADMIN')" th:href="@{/admin}"><span class="material-symbols-outlined">admin_panel_settings</span>Admin Portal</a>
+    </nav>
+    <div class="header-actions">
+        <button sec:authorize="isAnonymous()" class="icon-button theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="material-symbols-outlined">dark_mode</span></button>
+        <a sec:authorize="isAnonymous()" class="button button-primary button-small" th:href="@{/login}">Login / Register</a>
+        <details sec:authorize="isAuthenticated()" class="account-menu">
+            <summary class="account-trigger" aria-label="Open account menu"><span class="avatar avatar-small"><span class="material-symbols-outlined">person</span></span></summary>
+            <div class="account-popover">
+                <div class="account-identity"><small>Signed in as</small><strong sec:authentication="name"></strong></div>
+                <a th:href="@{/account}"><span class="material-symbols-outlined">manage_accounts</span>Account settings</a>
+                <button type="button" data-theme-toggle><span class="material-symbols-outlined">dark_mode</span><span data-theme-label>Dark mode</span></button>
+                <form th:action="@{/logout}" method="post"><button class="danger-text" type="submit"><span class="material-symbols-outlined">logout</span>Logout</button></form>
+            </div>
+        </details>
+    </div>
+</header>
+
+<aside th:fragment="adminSidebar(active)" class="admin-sidebar">
+    <div class="sidebar-brand"><a th:href="@{/}"><strong>RailConnect</strong></a><span>Admin Portal</span></div>
+    <nav aria-label="Administration">
+        <a th:classappend="${active == 'dashboard'} ? 'active'" th:href="@{/admin}"><span class="material-symbols-outlined">dashboard</span>Dashboard</a>
+        <a sec:authorize="hasRole('RAILWAY_ADMIN')" th:classappend="${active == 'trains'} ? 'active'" th:href="@{/admin/trains}"><span class="material-symbols-outlined">train</span>Trains</a>
+        <a sec:authorize="hasRole('RAILWAY_ADMIN')" th:classappend="${active == 'routes'} ? 'active'" th:href="@{/admin/routes}"><span class="material-symbols-outlined">directions_railway</span>Routes</a>
+        <a sec:authorize="hasRole('RAILWAY_ADMIN')" th:classappend="${active == 'schedules'} ? 'active'" th:href="@{/admin/schedules}"><span class="material-symbols-outlined">calendar_today</span>Schedules</a>
+        <a sec:authorize="hasRole('RAILWAY_ADMIN')" th:classappend="${active == 'carriages'} ? 'active'" th:href="@{/admin/carriages}"><span class="material-symbols-outlined">train</span>Carriages</a>
+        <a th:classappend="${active == 'bookings'} ? 'active'" th:href="@{/admin/bookings}"><span class="material-symbols-outlined">confirmation_number</span>Bookings</a>
+        <a th:classappend="${active == 'complaints'} ? 'active'" th:href="@{/admin/complaints}"><span class="material-symbols-outlined">report_problem</span>Complaints</a>
+    </nav>
+    <div class="sidebar-user">
+        <span class="avatar"><span class="material-symbols-outlined">person</span></span>
+        <div><strong sec:authentication="name">Admin</strong><small>Authorized staff</small></div>
+    </div>
+</aside>
+
+<header th:fragment="adminTopbar(title)" class="admin-topbar">
+    <div class="admin-topbar-title"><span class="material-symbols-outlined">menu</span><h2 th:text="${title}">Dashboard Overview</h2></div>
+    <div class="admin-topbar-actions">
+        <a sec:authorize="hasRole('BOOKING_OFFICER')" class="topbar-site-link" th:href="@{/}"><span class="material-symbols-outlined">open_in_new</span>Assisted booking</a>
+        <details class="account-menu">
+            <summary class="account-trigger" aria-label="Open account menu"><span class="avatar avatar-small"><span class="material-symbols-outlined">verified_user</span></span></summary>
+            <div class="account-popover">
+                <div class="account-identity"><small>Authorized staff</small><strong sec:authentication="name"></strong></div>
+                <a th:href="@{/account}"><span class="material-symbols-outlined">manage_accounts</span>Account settings</a>
+                <button type="button" data-theme-toggle><span class="material-symbols-outlined">dark_mode</span><span data-theme-label>Dark mode</span></button>
+                <form th:action="@{/logout}" method="post"><button class="danger-text" type="submit"><span class="material-symbols-outlined">logout</span>Logout</button></form>
+            </div>
+        </details>
+    </div>
+</header>
+
+<div th:fragment="flash" class="flash-stack" aria-live="polite">
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+</div>
+
+<footer th:fragment="footer" class="site-footer">
+    <div class="footer-inner">
+        <div><strong>RailConnect</strong><span>Plan journeys. Choose seats. Travel confidently.</span></div>
+        <div class="footer-meta"><span>Simulated checkout for demonstration</span><span>© 2026 RailConnect</span></div>
+    </div>
+</footer>
+</body>
+</html>

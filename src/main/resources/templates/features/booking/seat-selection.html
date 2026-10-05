@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Seat Selection & Booking')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: publicHeader('home')}"></header>
+<main><section class="section booking-page">
+    <nav class="booking-progress" aria-label="Booking progress"><span class="complete"><b>1</b>Search</span><span class="current" aria-current="step"><b>2</b>Seats</span><span><b>3</b>Payment</span><span><b>4</b>Ticket</span></nav>
+    <header class="page-header"><div><p class="eyebrow">Choose your carriage</p><h1>Seat Selection &amp; Booking</h1><p th:text="${schedule.train.trainName + ' (' + schedule.train.trainNumber + ') · ' + schedule.route.startStation + ' → ' + schedule.route.endStation + ' · ' + #temporals.format(schedule.travelDate, 'dd MMM yyyy') + ', ' + #temporals.format(schedule.departureTime, 'HH:mm')}"></p></div></header>
+    <form th:action="@{/schedules/{id}/book(id=${schedule.id})}" th:object="${bookingForm}" method="post" th:attr="data-base-fare=${schedule.baseFare}">
+        <div th:if="${#fields.hasGlobalErrors()}" class="form-errors" th:each="error : ${#fields.globalErrors()}" th:text="${error}"></div>
+        <div class="booking-layout">
+            <section class="seat-panel">
+                <div class="seat-panel-toolbar">
+                    <div><label for="class-filter">Carriage class</label><select id="class-filter"><option value="ALL">All classes</option><option value="FIRST">First Class</option><option value="SECOND">Second Class</option><option value="THIRD">Third Class</option></select></div>
+                    <div class="seat-legend"><span><i class="legend-box available"></i>Available</span><span><i class="legend-box selected"></i>Selected</span><span><i class="legend-box unavailable"></i>Unavailable</span></div>
+                </div>
+                <div class="seat-heading"><div><h2>Select seats</h2><p>Each block is a separate physical carriage. Grey seats are unavailable.</p></div><div class="selected-indicator"><strong id="selected-count">0</strong> selected</div></div>
+                <div class="carriage-list">
+                    <section class="carriage-deck" th:each="group : ${seatGroups}" th:attr="data-carriage-class=${group.carriage.classType},data-fare=${group.farePerSeat}">
+                        <header class="carriage-header">
+                            <div><span class="class-badge" th:text="${#strings.capitalize(#strings.toLowerCase(group.carriage.classType)) + ' class'}"></span><h3 th:text="${'Carriage ' + group.carriage.carriageNumber}"></h3></div>
+                            <div class="carriage-fare"><small>Price per seat</small><strong th:text="${'LKR ' + group.farePerSeat}"></strong></div>
+                        </header>
+                        <div class="train-coach"><span class="coach-front">Front</span><div class="seat-grid">
+                            <div class="seat-choice" th:each="option : ${group.seats}" th:classappend="${!option.available} ? 'unavailable'" th:attr="data-carriage-class=${option.seat.carriage.classType}">
+                                <input type="checkbox" th:field="*{seatIds}" th:value="${option.seat.id}" th:id="${'seat-' + option.seat.id}" th:disabled="${!option.available}" th:attr="data-seat-label=${option.seat.carriage.carriageNumber + '-' + option.seat.seatNumber}">
+                                <label th:for="${'seat-' + option.seat.id}" th:title="${option.seat.seatType}"><span class="material-symbols-outlined">event_seat</span><b th:text="${option.seat.seatNumber}"></b></label>
+                            </div>
+                        </div><span class="coach-rear">Rear</span></div>
+                    </section>
+                    <div th:if="${#lists.isEmpty(seatGroups)}" class="empty-state"><h3>No seats configured</h3><p>This train has no active carriages or seats yet.</p></div>
+                </div>
+                <span class="field-error" th:errors="*{seatIds}"></span>
+            </section>
+
+            <aside class="booking-summary">
+                <h2>Booking Summary</h2>
+                <div class="summary-line"><span>Journey</span><strong th:text="${schedule.route.startStation + ' → ' + schedule.route.endStation}"></strong></div>
+                <div class="summary-line"><span>Date</span><strong th:text="${#temporals.format(schedule.travelDate, 'dd MMM yyyy')}"></strong></div>
+                <div class="summary-line"><span>Departure</span><strong th:text="${#temporals.format(schedule.departureTime, 'HH:mm')}"></strong></div>
+                <div class="summary-line"><span>Selected seats</span><strong id="selected-seats" class="summary-accent">Choose a seat</strong></div>
+                <div class="summary-divider"></div>
+
+                <div th:unless="${bookingOfficer}" class="profile-summary">
+                    <div class="profile-summary-heading"><span class="material-symbols-outlined">person</span><div><strong>Passenger details</strong><small>Managed from account settings</small></div><a th:href="@{/account}">Edit</a></div>
+                    <dl><dt>Name</dt><dd th:text="${bookingActor.fullName}"></dd><dt>Email</dt><dd th:text="${bookingActor.email}"></dd><dt>Phone</dt><dd th:text="${bookingActor.phone}"></dd></dl>
+                    <input type="hidden" th:field="*{passengerName}"><input type="hidden" th:field="*{contactEmail}"><input type="hidden" th:field="*{contactPhone}">
+                </div>
+                <div th:if="${bookingOfficer}" class="assisted-customer-form">
+                    <div class="profile-summary-heading"><span class="material-symbols-outlined">support_agent</span><div><strong>Customer details</strong><small>Booking on behalf of a passenger</small></div></div>
+                    <div class="field"><label for="passengerName">Customer name</label><input id="passengerName" th:field="*{passengerName}" placeholder="Customer"><span class="field-error" th:errors="*{passengerName}"></span></div>
+                </div>
+
+                <div class="fare-card"><div><span>Seat fares</span><strong id="seat-fare-total">LKR 0.00</strong></div><div><span>Reservation fee</span><strong id="reservation-fee">LKR 0.00</strong></div><div class="fare-total"><span>Estimated total</span><strong id="estimated-total">LKR 0.00</strong></div></div>
+                <button id="continue-booking" class="button button-primary button-block confirm-button" type="submit" disabled>Reserve Seats &amp; Continue <span class="material-symbols-outlined">arrow_forward</span></button>
+                <p class="summary-note">The server recalculates the final fare and confirms that every selected seat is still available.</p>
+            </aside>
+        </div>
+    </form>
+</section></main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script th:src="@{/js/booking.js}"></script>
+</body></html>

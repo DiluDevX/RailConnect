@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Unexpected error')}"></head>
+<body>
+<main class="error-page">
+    <strong th:text="${status ?: 500}">500</strong>
+    <h1>We could not complete that request</h1>
+    <p th:text="${message ?: 'An unexpected error occurred.'}">Unexpected error.</p>
+    <a class="button button-primary" th:href="@{/}">Return Home</a>
+</main>
+</body>
+</html>
