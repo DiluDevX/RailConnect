@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Complaint Management</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --primary: #1f5ea8;
+      --primary-dark: #173f74;
+      --muted: #5b6475;
+      --border: #dfe7f1;
+      --success: #1f9d6b;
+      --warning: #d97706;
+      --danger: #b42318;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #edf4ff 0%, var(--bg) 100%);
+      color: #162033;
+    }
+    .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 18px 24px; background: var(--panel); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow);
+    }
+    .brand { font-size: 1.8rem; font-weight: 700; color: var(--primary-dark); }
+    .actions { display: flex; gap: 10px; }
+    .btn {
+      border: none; border-radius: 10px; padding: 10px 16px; font-weight: 600; cursor: pointer;
+    }
+    .btn.primary { background: var(--primary); color: white; }
+    .btn.secondary { background: #eef4ff; color: var(--primary-dark); }
+    .grid {
+      display: grid; grid-template-columns: repeat(4, minmax(180px, 1fr)); gap: 18px;
+      margin-top: 28px;
+    }
+    .card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 18px; box-shadow: var(--shadow);
+    }
+    .label { color: var(--muted); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    .value { font-size: 2rem; font-weight: 700; margin-top: 10px; }
+    .panel {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 18px; margin-top: 28px; box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 18px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;
+      background: #f9fbff;
+    }
+    table {
+      width: 100%; border-collapse: collapse;
+    }
+    th, td {
+      padding: 16px 20px; text-align: left; border-bottom: 1px solid var(--border);
+    }
+    th { background: #f4f8ff; color: #29446d; }
+    .status {
+      display: inline-block; padding: 6px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 700;
+    }
+    .open { background: #e8f7f0; color: var(--success); }
+    .in-review { background: #fff7e8; color: var(--warning); }
+    .resolved { background: #ebf5ff; color: var(--primary); }
+    .closed { background: #f1f5f9; color: #475569; }
+    .withdrawn { background: #fdecec; color: var(--danger); }
+    .row-actions button {
+      margin-right: 8px; border: none; background: #eef3ff; border-radius: 8px; padding: 7px 10px; cursor: pointer;
+      color: var(--primary-dark);
+      font-weight: 600;
+    }
+    .modal {
+      display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); align-items: center; justify-content: center; z-index: 20;
+    }
+    .modal.show { display: flex; }
+    .modal-card {
+      width: min(540px, 90vw); background: white; border-radius: 16px; padding: 24px; box-shadow: var(--shadow);
+    }
+    .field { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+    .field label { font-weight: 700; color: var(--muted); }
+    .field input, .field select, .field textarea {
+      width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 0.95rem;
+    }
+    .field textarea { min-height: 100px; resize: vertical; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+    .muted { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="brand">RailConnect</div>
+      <div class="actions">
+        <button id="myComplaintsBtn" class="btn secondary" type="button">My Complaints</button>
+        <button id="newComplaintBtn" class="btn primary" type="button">+ New Complaint</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">Total</div>
+        <div id="totalCount" class="value">0</div>
+      </div>
+      <div class="card">
+        <div class="label">Open</div>
+        <div id="openCount" class="value">0</div>
+      </div>
+      <div class="card">
+        <div class="label">In Review</div>
+        <div id="reviewCount" class="value">0</div>
+      </div>
+      <div class="card">
+        <div class="label">Resolved</div>
+        <div id="resolvedCount" class="value">0</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <strong>Recent complaints</strong>
+        <button id="refreshBtn" class="btn secondary" type="button">Refresh</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Subject</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="complaintTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="complaintModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <h2 id="modalTitle">New Complaint</h2>
+      <form id="complaintForm">
+        <div class="field">
+          <label for="complaintId">Complaint ID</label>
+          <input id="complaintId" type="text" placeholder="Optional for new entry" />
+        </div>
+        <div class="field">
+          <label for="complaintSubject">Subject</label>
+          <input id="complaintSubject" type="text" required />
+        </div>
+        <div class="field">
+          <label for="complaintType">Type</label>
+          <select id="complaintType">
+            <option value="BOOKING">BOOKING</option>
+            <option value="PAYMENT">PAYMENT</option>
+            <option value="SERVICE">SERVICE</option>
+            <option value="FACILITY">FACILITY</option>
+            <option value="TECHNICAL">TECHNICAL</option>
+            <option value="OTHER">OTHER</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="complaintStatus">Status</label>
+          <select id="complaintStatus">
+            <option value="OPEN">OPEN</option>
+            <option value="IN_REVIEW">IN_REVIEW</option>
+            <option value="RESOLVED">RESOLVED</option>
+            <option value="CLOSED">CLOSED</option>
+            <option value="WITHDRAWN">WITHDRAWN</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="complaintDescription">Description</label>
+          <textarea id="complaintDescription" required></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" id="closeModalBtn">Cancel</button>
+          <button type="submit" class="btn primary" id="saveComplaintBtn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const complaintData = [
+      { id: 'CMP-1001', subject: 'Ticket issue', type: 'BOOKING', status: 'OPEN', description: 'Booking confirmation was delayed.' },
+      { id: 'CMP-1002', subject: 'Poor staff support', type: 'SERVICE', status: 'IN_REVIEW', description: 'Staff were not helpful at station.' },
+      { id: 'CMP-1003', subject: 'Payment failed', type: 'PAYMENT', status: 'RESOLVED', description: 'Duplicate payment was processed.' },
+      { id: 'CMP-1004', subject: 'Washroom cleanliness', type: 'FACILITY', status: 'OPEN', description: 'Facilities were not maintained properly.' }
+    ];
+
+    const statusClassMap = {
+      OPEN: 'open',
+      IN_REVIEW: 'in-review',
+      RESOLVED: 'resolved',
+      CLOSED: 'closed',
+      WITHDRAWN: 'withdrawn'
+    };
+
+    let editingComplaintId = null;
+
+    function getCounts() {
+      return {
+        total: complaintData.length,
+        open: complaintData.filter(item => item.status === 'OPEN').length,
+        review: complaintData.filter(item => item.status === 'IN_REVIEW').length,
+        resolved: complaintData.filter(item => item.status === 'RESOLVED').length
+      };
+    }
+
+    function renderStats() {
+      const counts = getCounts();
+      document.getElementById('totalCount').textContent = counts.total;
+      document.getElementById('openCount').textContent = counts.open;
+      document.getElementById('reviewCount').textContent = counts.review;
+      document.getElementById('resolvedCount').textContent = counts.resolved;
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('complaintTableBody');
+      tbody.innerHTML = '';
+
+      complaintData.forEach((complaint) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${complaint.id}</td>
+          <td>${complaint.subject}</td>
+          <td>${complaint.type}</td>
+          <td><span class="status ${statusClassMap[complaint.status] || 'open'}">${complaint.status}</span></td>
+          <td class="row-actions">
+            <button type="button" data-action="view" data-id="${complaint.id}">View</button>
+            <button type="button" data-action="edit" data-id="${complaint.id}">Edit</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function refreshComplaintDashboard() {
+      renderStats();
+      renderTable();
+    }
+
+    function showModal(title, complaint = null) {
+      const modal = document.getElementById('complaintModal');
+      const titleEl = document.getElementById('modalTitle');
+      const form = document.getElementById('complaintForm');
+
+      titleEl.textContent = title;
+      editingComplaintId = complaint ? complaint.id : null;
+
+      document.getElementById('complaintId').value = complaint ? complaint.id : '';
+      document.getElementById('complaintSubject').value = complaint ? complaint.subject : '';
+      document.getElementById('complaintType').value = complaint ? complaint.type : 'BOOKING';
+      document.getElementById('complaintStatus').value = complaint ? complaint.status : 'OPEN';
+      document.getElementById('complaintDescription').value = complaint ? complaint.description : '';
+
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden', 'false');
+      form.reset();
+      if (complaint) {
+        document.getElementById('complaintId').value = complaint.id;
+        document.getElementById('complaintSubject').value = complaint.subject;
+        document.getElementById('complaintType').value = complaint.type;
+        document.getElementById('complaintStatus').value = complaint.status;
+        document.getElementById('complaintDescription').value = complaint.description;
+      }
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('complaintModal');
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+      editingComplaintId = null;
+      document.getElementById('complaintForm').reset();
+    }
+
+    function createComplaintRecord(payload) {
+      const id = payload.id || `CMP-${String(Date.now()).slice(-4)}`;
+      const complaint = {
+        id,
+        subject: payload.subject,
+        type: payload.type,
+        status: payload.status,
+        description: payload.description
+      };
+
+      if (editingComplaintId) {
+        const index = complaintData.findIndex(item => item.id === editingComplaintId);
+        if (index >= 0) {
+          complaintData[index] = { ...complaintData[index], ...complaint };
+        }
+      } else {
+        complaintData.unshift(complaint);
+      }
+
+      refreshComplaintDashboard();
+      closeModal();
+    }
+
+    function handleTableAction(event) {
+      const target = event.target.closest('button');
+      if (!target) return;
+
+      const action = target.dataset.action;
+      const complaintId = target.dataset.id;
+      const complaint = complaintData.find(item => item.id === complaintId);
+      if (!complaint) return;
+
+      if (action === 'view') {
+        alert(`${complaint.subject}\n\nType: ${complaint.type}\nStatus: ${complaint.status}\n\n${complaint.description}`);
+      }
+
+      if (action === 'edit') {
+        showModal('Edit Complaint', complaint);
+      }
+    }
+
+    document.getElementById('newComplaintBtn').addEventListener('click', () => showModal('New Complaint'));
+    document.getElementById('refreshBtn').addEventListener('click', refreshComplaintDashboard);
+    document.getElementById('myComplaintsBtn').addEventListener('click', () => {
+      const userComplaints = complaintData.slice(0, 2);
+      alert('My Complaints\n\n' + userComplaints.map(item => `${item.id}: ${item.subject} (${item.status})`).join('\n'));
+    });
+    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+    document.getElementById('complaintTableBody').addEventListener('click', handleTableAction);
+    document.getElementById('complaintForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+      const valid = document.getElementById('complaintSubject').value.trim() && document.getElementById('complaintDescription').value.trim();
+      if (!valid) {
+        alert('Please fill in subject and description.');
+        return;
+      }
+
+      createComplaintRecord({
+        id: document.getElementById('complaintId').value.trim(),
+        subject: document.getElementById('complaintSubject').value.trim(),
+        type: document.getElementById('complaintType').value,
+        status: document.getElementById('complaintStatus').value,
+        description: document.getElementById('complaintDescription').value.trim()
+      });
+    });
+
+    refreshComplaintDashboard();
+  </script>
+</body>
+</html>
