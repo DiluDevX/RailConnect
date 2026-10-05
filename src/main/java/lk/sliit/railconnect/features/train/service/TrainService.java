@@ -1,0 +1,116 @@
+package lk.sliit.railconnect.features.train.service;
+
+import lk.sliit.railconnect.features.carriage.repository.CarriageRepository;
+import lk.sliit.railconnect.features.carriage.domain.CarriageStatus;
+import lk.sliit.railconnect.features.train.domain.Train;
+import lk.sliit.railconnect.features.train.domain.TrainStatus;
+import lk.sliit.railconnect.features.train.dto.TrainForm;
+import lk.sliit.railconnect.features.train.repository.TrainRepository;
+import lk.sliit.railconnect.shared.exception.BusinessRuleException;
+import lk.sliit.railconnect.shared.exception.ResourceNotFoundException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.regex.Pattern;
+
+@Service
+public class TrainService {
+    private static final Pattern TRAIN_NUMBER = Pattern.compile("\\d{4}");
+
+    private final TrainRepository trainRepository;
+    private final CarriageRepository carriageRepository;
+
+    public TrainService(TrainRepository trainRepository, CarriageRepository carriageRepository) {
+        this.trainRepository = trainRepository;
+        this.carriageRepository = carriageRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Train> list(String query) {
+        return search(query, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Train> search(String query, TrainStatus status) {
+        String keyword = query == null || query.isBlank() ? null : query.trim();
+        return trainRepository.search(keyword, status);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Train> active() {
+        return trainRepository.findByStatusOrderByTrainNumber(TrainStatus.ACTIVE);
+    }
+
+    @Transactional(readOnly = true)
+    public Train require(Long id) {
+        return trainRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Train was not found."));
+    }
+
+    @Transactional
+    public Train create(TrainForm form) {
+        String trainNumber = requireTrainNumber(form.getTrainNumber(), null);
+        Train train = new Train(trainNumber, form.getTrainName().trim(), clean(form.getDescription()));
+        train.update(train.getTrainNumber(), train.getTrainName(), train.getDescription(), form.getFirstClassFare(),
+                form.getSecondClassFare(), form.getThirdClassFare(), TrainStatus.ACTIVE);
+        return trainRepository.save(train);
+    }
+
+    @Transactional
+    public Train update(Long id, TrainForm form) {
+        Train train = require(id);
+        String trainNumber = requireTrainNumber(form.getTrainNumber(), id);
+        train.update(trainNumber, form.getTrainName().trim(), clean(form.getDescription()),
+                form.getFirstClassFare(), form.getSecondClassFare(), form.getThirdClassFare(), form.getStatus());
+        return train;
+    }
+
+    @Transactional
+    public void toggleActive(Long id) {
+        Train train = require(id);
+        TrainStatus next = train.getStatus() == TrainStatus.INACTIVE ? TrainStatus.ACTIVE : TrainStatus.INACTIVE;
+        train.update(train.getTrainNumber(), train.getTrainName(), train.getDescription(), train.getFirstClassFare(),
+                train.getSecondClassFare(), train.getThirdClassFare(), next);
+    }
+
+    @Transactional
+    public void activate(Long id) {
+        Train train = require(id);
+        train.update(train.getTrainNumber(), train.getTrainName(), train.getDescription(), train.getFirstClassFare(),
+                train.getSecondClassFare(), train.getThirdClassFare(), TrainStatus.ACTIVE);
+    }
+
+    @Transactional
+    public void deactivate(Long id) {
+        Train train = require(id);
+        train.update(train.getTrainNumber(), train.getTrainName(), train.getDescription(), train.getFirstClassFare(),
+                train.getSecondClassFare(), train.getThirdClassFare(), TrainStatus.INACTIVE);
+    }
+
+    @Transactional(readOnly = true)
+    public long activeCapacity(Long trainId) {
+        return carriageRepository.capacityForTrainAndStatus(trainId, CarriageStatus.ACTIVE);
+    }
+
+    private String requireTrainNumber(String number, Long currentId) {
+        if (number == null || number.isBlank()) {
+            throw new BusinessRuleException("Train number is required.");
+        }
+        String normalized = number.trim();
+        if (!TRAIN_NUMBER.matcher(normalized).matches()) {
+            throw new BusinessRuleException("Train number must be exactly 4 digits, for example 1001.");
+        }
+        boolean alreadyUsed = currentId == null
+                ? trainRepository.existsByTrainNumberIgnoreCase(normalized)
+                : trainRepository.existsByTrainNumberIgnoreCaseAndIdNot(normalized, currentId);
+        if (alreadyUsed) {
+            throw new BusinessRuleException("Train number " + normalized + " is already used and cannot be repeated.");
+        }
+        return normalized;
+    }
+
+    private String clean(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+}
