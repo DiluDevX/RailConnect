@@ -157,8 +157,10 @@ public class BookingService {
         if (booking.getHoldExpiresAt().isBefore(LocalDateTime.now())) {
             releaseReservations(booking);
             booking.expire();
-            throw new BusinessRuleException("The seat hold expired. Retry the booking to check availability again.");
+            // Return normally so the transaction commits the expiry and released seats.
+            return booking;
         }
+        validateBookableSchedule(booking.getSchedule());
         int attempt = Math.toIntExact(paymentRepository.countByBookingId(bookingId) + 1);
         PaymentStatus status = successful ? PaymentStatus.SUCCEEDED : PaymentStatus.FAILED;
         paymentRepository.save(new Payment(booking, attempt, booking.getTotalAmount(), status, method,
@@ -183,6 +185,7 @@ public class BookingService {
         if (booking.getStatus() != BookingStatus.PAYMENT_FAILED && booking.getStatus() != BookingStatus.EXPIRED) {
             throw new BusinessRuleException("Only failed or expired bookings can be retried.");
         }
+        validateBookableSchedule(booking.getSchedule());
         LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(holdMinutes);
         for (BookingSeat bookingSeat : bookingSeatRepository.findByBookingIdOrderBySeatCarriageCarriageNumberAscSeatSeatNumberAsc(bookingId)) {
             validateSeatBelongsToSchedule(bookingSeat.getSeat(), booking.getSchedule());

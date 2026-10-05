@@ -16,6 +16,9 @@ Coverage focuses on high-risk backend rules:
 - Schedule rejects an overlapping timetable for the same train.
 - Successful simulated payment confirms the original pending booking.
 - Failed payment releases seats and retry reuses the booking.
+- Retry and payment reject schedules cancelled after the booking was created.
+- Expired checkout commits `EXPIRED`/released seats without recording payment,
+  then allows retry. This test reloads state outside the service transaction.
 - Train create/read/update/deactivate lifecycle.
 - Carriage creation generates seats and contributes derived train capacity.
 - Complaint create/update/respond lifecycle.

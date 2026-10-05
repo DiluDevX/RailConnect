@@ -133,6 +133,10 @@ public class BookingController {
             successful = "success".equalsIgnoreCase(outcome);
         }
         TicketBooking booking = bookingService.processPayment(id, actor, method, successful);
+        if (booking.getStatus() == lk.sliit.railconnect.features.booking.domain.BookingStatus.EXPIRED) {
+            redirectAttributes.addFlashAttribute("error", "The seat hold expired. Retry the booking to check availability again.");
+            return "redirect:/bookings/" + booking.getId();
+        }
         if (successful) {
             String message = method == PaymentMethod.CASH
                     ? "Cash payment recorded. The assisted booking is confirmed."

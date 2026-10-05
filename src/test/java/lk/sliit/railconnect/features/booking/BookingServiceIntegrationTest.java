@@ -127,6 +127,31 @@ class BookingServiceIntegrationTest {
     }
 
     @Test
+    void cancelledScheduleCannotBeRetried() {
+        TicketBooking booking = bookingService.startBooking(passenger, schedule.getId(), bookingForm());
+        bookingService.processSimulatedPayment(booking.getId(), passenger, false);
+        schedule.cancel();
+
+        assertThatThrownBy(() -> bookingService.retry(booking.getId(), passenger))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("not available for booking");
+        assertThat(booking.getStatus()).isEqualTo(BookingStatus.PAYMENT_FAILED);
+    }
+
+    @Test
+    void cancelledScheduleCannotReceivePayment() {
+        TicketBooking booking = bookingService.startBooking(passenger, schedule.getId(), bookingForm());
+        schedule.cancel();
+
+        assertThatThrownBy(() -> bookingService.processPayment(
+                booking.getId(), passenger, PaymentMethod.SIMULATED_CARD, true))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("not available for booking");
+        assertThat(booking.getStatus()).isEqualTo(BookingStatus.PENDING_PAYMENT);
+        assertThat(paymentRepository.countByBookingId(booking.getId())).isZero();
+    }
+
+    @Test
     void bookingStaffCanUpdateAndDeleteCustomerBooking() {
         User officer = userRepository.save(new User("Booking Officer", "crud-officer@example.com", "encoded",
                 "0711111111", UserRole.BOOKING_OFFICER));

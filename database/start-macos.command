@@ -37,6 +37,9 @@ if ! command -v mvn >/dev/null 2>&1; then
   exit 1
 fi
 
+export DB_URL="jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${DATABASE_NAME}?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Colombo"
+export DB_USERNAME="${MYSQL_USER}"
+export DB_PASSWORD="${MYSQL_PASSWORD}"
 mvn spring-boot:run
 exit_code=$?
 if [ "${exit_code}" -ne 0 ]; then

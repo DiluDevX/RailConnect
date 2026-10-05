@@ -42,6 +42,12 @@ explain without solving a real problem.
 6. Retry reuses the failed booking and tries to hold the same seats again.
 7. Cancellation releases seats and changes a successful payment to refunded.
 
+Retry and payment re-check that the schedule is still bookable, so a cancelled
+schedule cannot receive a new confirmation. When a seat hold expires, the payment
+service returns the expired booking normally so its transaction commits the expiry
+and released seats. The controller then redirects to booking details with an error
+message; that page offers retry. No payment attempt is recorded for an expired hold.
+
 The database uniqueness constraint on `(schedule_id, seat_id)` is the final protection
 against double-booking. The service also uses a pessimistic lock so the error can be
 handled as a business rule.
@@ -52,4 +58,3 @@ Six separately deployed services would require API versioning, distributed
 transactions, service discovery, more Docker containers and failure recovery.
 That complexity would distract from the assessed Java/OOP/database work. Feature
 packages give clear ownership while preserving one reliable transaction boundary.
-
