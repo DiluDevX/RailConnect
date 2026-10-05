@@ -4,7 +4,6 @@ RailConnect is a layered modular monolith:
 
 ```text
 Browser -> Controller -> Service -> Repository -> MySQL
-                       -> NotificationService (optional local implementation)
 ```
 
 ## Layer responsibilities
@@ -21,8 +20,8 @@ Browser -> Controller -> Service -> Repository -> MySQL
 - Encapsulation: fields are private and state changes use methods such as
   `confirm`, `release`, `cancel`, `respond` and `update`.
 - Abstraction: controllers call services instead of database code.
-- Interface and polymorphism: `NotificationService` is an interface and
-  `LocalNotificationService` is its current implementation.
+- Interface and polymorphism: `UserService` accepts the `PasswordEncoder`
+  interface; `SecurityConfig` supplies `BCryptPasswordEncoder` as its strategy.
 - Composition/association: a schedule references one train and route; a booking
   contains selected-seat rows and reservation/payment records.
 - Dependency injection: Spring supplies repository and service dependencies through
@@ -41,6 +40,12 @@ explain without solving a real problem.
 5. Simulated failure marks the attempt failed and releases reservations.
 6. Retry reuses the failed booking and tries to hold the same seats again.
 7. Cancellation releases seats and changes a successful payment to refunded.
+
+Retry and payment re-check that the schedule is still bookable, so a cancelled
+schedule cannot receive a new confirmation. When a seat hold expires, the payment
+service returns the expired booking normally so its transaction commits the expiry
+and released seats. The controller then redirects to booking details with an error
+message; that page offers retry. No payment attempt is recorded for an expired hold.
 
 The database uniqueness constraint on `(schedule_id, seat_id)` is the final protection
 against double-booking. The service also uses a pessimistic lock so the error can be

@@ -5,12 +5,13 @@ import lk.sliit.railconnect.auth.domain.UserRole;
 import lk.sliit.railconnect.features.booking.domain.BookingSeat;
 import lk.sliit.railconnect.features.booking.domain.BookingStatus;
 import lk.sliit.railconnect.features.booking.domain.Payment;
-import lk.sliit.railconnect.features.booking.domain.PaymentStatus;
 import lk.sliit.railconnect.features.booking.domain.PaymentMethod;
+import lk.sliit.railconnect.features.booking.domain.PaymentStatus;
 import lk.sliit.railconnect.features.booking.domain.ReservationStatus;
 import lk.sliit.railconnect.features.booking.domain.SeatReservation;
 import lk.sliit.railconnect.features.booking.domain.TicketBooking;
 import lk.sliit.railconnect.features.booking.dto.BookingForm;
+import lk.sliit.railconnect.features.booking.dto.AdminBookingForm;
 import lk.sliit.railconnect.features.booking.dto.SeatOption;
 import lk.sliit.railconnect.features.booking.dto.CarriageSeatGroup;
 import lk.sliit.railconnect.features.booking.repository.BookingSeatRepository;
@@ -53,7 +54,6 @@ public class BookingService {
     private final PaymentRepository paymentRepository;
     private final SeatRepository seatRepository;
     private final ScheduleService scheduleService;
-    private final NotificationService notificationService;
     private final long holdMinutes;
 
     public BookingService(TicketBookingRepository bookingRepository,
@@ -62,7 +62,6 @@ public class BookingService {
                           PaymentRepository paymentRepository,
                           SeatRepository seatRepository,
                           ScheduleService scheduleService,
-                          NotificationService notificationService,
                           @Value("${railconnect.booking.hold-minutes:10}") long holdMinutes) {
         this.bookingRepository = bookingRepository;
         this.bookingSeatRepository = bookingSeatRepository;
@@ -70,7 +69,6 @@ public class BookingService {
         this.paymentRepository = paymentRepository;
         this.seatRepository = seatRepository;
         this.scheduleService = scheduleService;
-        this.notificationService = notificationService;
         this.holdMinutes = holdMinutes;
     }
 
@@ -159,15 +157,17 @@ public class BookingService {
         if (booking.getHoldExpiresAt().isBefore(LocalDateTime.now())) {
             releaseReservations(booking);
             booking.expire();
-            throw new BusinessRuleException("The seat hold expired. Retry the booking to check availability again.");
+            // Return normally so the transaction commits the expiry and released seats.
+            return booking;
         }
+        validateBookableSchedule(booking.getSchedule());
         int attempt = Math.toIntExact(paymentRepository.countByBookingId(bookingId) + 1);
         PaymentStatus status = successful ? PaymentStatus.SUCCEEDED : PaymentStatus.FAILED;
-        paymentRepository.save(new Payment(booking, attempt, booking.getTotalAmount(), status, method, transactionReference(method)));
+        paymentRepository.save(new Payment(booking, attempt, booking.getTotalAmount(), status, method,
+                transactionReference(method)));
         if (successful) {
             reservationRepository.findByBookingId(bookingId).forEach(SeatReservation::confirm);
             booking.confirm();
-            notificationService.bookingConfirmed(booking);
         } else {
             releaseReservations(booking);
             booking.markPaymentFailed();
@@ -175,7 +175,6 @@ public class BookingService {
         return booking;
     }
 
-    @Transactional
     public TicketBooking processSimulatedPayment(Long bookingId, User actor, boolean successful) {
         return processPayment(bookingId, actor, PaymentMethod.SIMULATED_CARD, successful);
     }
@@ -186,6 +185,7 @@ public class BookingService {
         if (booking.getStatus() != BookingStatus.PAYMENT_FAILED && booking.getStatus() != BookingStatus.EXPIRED) {
             throw new BusinessRuleException("Only failed or expired bookings can be retried.");
         }
+        validateBookableSchedule(booking.getSchedule());
         LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(holdMinutes);
         for (BookingSeat bookingSeat : bookingSeatRepository.findByBookingIdOrderBySeatCarriageCarriageNumberAscSeatSeatNumberAsc(bookingId)) {
             validateSeatBelongsToSchedule(bookingSeat.getSeat(), booking.getSchedule());
@@ -208,7 +208,6 @@ public class BookingService {
                 .ifPresent(Payment::refund);
         releaseReservations(booking);
         booking.cancel();
-        notificationService.bookingCancelled(booking);
     }
 
     @Transactional(readOnly = true)
@@ -237,6 +236,30 @@ public class BookingService {
     @Transactional(readOnly = true)
     public List<Payment> paymentsForBooking(Long bookingId) {
         return paymentRepository.findByBookingIdOrderByAttemptNumber(bookingId);
+    }
+
+    @Transactional
+    public TicketBooking updateByStaff(Long bookingId, User actor, AdminBookingForm form) {
+        ensureStaff(actor);
+        TicketBooking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking was not found."));
+        String name = form.getPassengerName().trim();
+        if (name.isBlank()) {
+            throw new BusinessRuleException("Passenger name is required.");
+        }
+        booking.updatePassengerDetails(name, clean(form.getContactEmail()), clean(form.getContactPhone()));
+        return booking;
+    }
+
+    @Transactional
+    public void deleteByStaff(Long bookingId, User actor) {
+        ensureStaff(actor);
+        TicketBooking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking was not found."));
+        reservationRepository.deleteAll(reservationRepository.findByBookingId(bookingId));
+        bookingSeatRepository.deleteAll(bookingSeatRepository.findByBookingIdOrderBySeatCarriageCarriageNumberAscSeatSeatNumberAsc(bookingId));
+        paymentRepository.deleteAll(paymentRepository.findByBookingIdOrderByAttemptNumber(bookingId));
+        bookingRepository.delete(booking);
     }
 
     private void holdSeat(TrainSchedule schedule, Seat seat, TicketBooking booking, LocalDateTime expiresAt) {
@@ -286,6 +309,16 @@ public class BookingService {
         if (actor.getRole() != UserRole.PASSENGER && actor.getRole() != UserRole.BOOKING_OFFICER) {
             throw new BusinessRuleException("Only passengers and booking officers can create or pay for bookings.");
         }
+    }
+
+    private void ensureStaff(User actor) {
+        if (actor.getRole() != UserRole.BOOKING_OFFICER && actor.getRole() != UserRole.RAILWAY_ADMIN) {
+            throw new BusinessRuleException("Only booking staff can manage booking records.");
+        }
+    }
+
+    private String clean(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private String transactionReference(PaymentMethod method) {

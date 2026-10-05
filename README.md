@@ -25,7 +25,7 @@ Requirements: Java 17+, Maven 3.9+, Docker Desktop.
 
 ```bash
 docker compose up -d db
-mvn spring-boot:run
+DB_URL='jdbc:mysql://127.0.0.1:3307/railconnect?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Colombo' DB_USERNAME=railconnect DB_PASSWORD=railconnect_dev mvn spring-boot:run
 ```
 
 Open [http://localhost:8080](http://localhost:8080).
@@ -135,8 +135,8 @@ between the lecture EER, MySQL tables and application screens is documented in
 - Search filters out schedules that do not have enough active seats for the requested passenger count.
 - Search supports up to 10 passengers and refreshes matching schedules as route, date or passenger inputs change.
 - Each train can define first-, second- and third-class fares; the seat map shows the configured fare per carriage.
-- Confirmed bookings can download a one-page PDF e-ticket directly from the booking details page.
-- Booking officers print confirmed tickets from the details page, while passengers see the direct PDF download.
+- Confirmed bookings can be printed from the booking details page using the browser print dialog.
+- Booking officers and passengers use the same simple print action for the confirmed ticket.
 - A guest who selects a schedule is returned to that schedule's seat map after signing in; protected booking and admin routes enforce their role conditions.
 - Shared success/error notifications slide in from the upper-right and station fields provide full-width filtered suggestions.
 - Passengers can change their password in Account settings and use the local demo forgot-password flow.
@@ -156,7 +156,8 @@ The tested flows and remaining manual checks are documented in
 
 ## Configuration
 
-Defaults work with `docker-compose.yml`. Override them when needed:
+Defaults use local MySQL on port 3306. For `docker-compose.yml`, use port 3307
+and the Docker database credentials:
 
 ```bash
 export DB_URL='jdbc:mysql://localhost:3307/railconnect?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Colombo'
