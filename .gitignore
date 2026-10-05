@@ -1,11 +1,32 @@
 # Maven build output
 target/
+
+# Java build artifacts
+*.class
+hs_err_pid*
+
+# IDE settings
 .idea/
 .vscode/
 *.iml
+.classpath
+.project
+.settings/
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# Local configuration and secrets
 .env
+.env.*
+!.env.example
 application-local.properties
+
+# Logs
+*.log
+
+# Local output and temporary files
 output/
 .playwright-cli/
 tmp/
