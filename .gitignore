@@ -1,3 +1,4 @@
+# Maven build output
 target/
 .idea/
 .vscode/
