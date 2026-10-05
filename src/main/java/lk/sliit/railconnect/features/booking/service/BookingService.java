@@ -101,14 +101,19 @@ public class BookingService {
 
     @Transactional
     public TicketBooking startBooking(User actor, Long scheduleId, BookingForm form) {
+        // Role validation: only passengers or booking officers may create a booking
         ensureBookingActor(actor);
         TrainSchedule schedule = scheduleService.require(scheduleId);
+        // Business-rule validation: schedule must be active/delayed and not in the past
         validateBookableSchedule(schedule);
+
+        // Data-integrity validation: every submitted seat id must correspond to a real, distinct seat
         List<Seat> seats = seatRepository.findAllById(form.getSeatIds());
         if (seats.size() != new HashSet<>(form.getSeatIds()).size() || seats.isEmpty()) {
             throw new BusinessRuleException("One or more selected seats do not exist.");
         }
         for (Seat seat : seats) {
+            // Business-rule validation: each seat must belong to this train and be in service
             validateSeatBelongsToSchedule(seat, schedule);
         }
 
@@ -130,12 +135,16 @@ public class BookingService {
 
         try {
             for (Seat seat : seats) {
+                // Concurrency-safe seat hold: locks the reservation row so two customers
+                // can't both grab the same seat at the same time
                 holdSeat(schedule, seat, booking, expiresAt);
                 BigDecimal seatFare = schedule.getTrain().fareFor(seat.getCarriage().getClassType(), schedule.getBaseFare())
                         .setScale(2, RoundingMode.HALF_UP);
                 bookingSeatRepository.save(new BookingSeat(booking, seat, seatFare));
             }
         } catch (DataIntegrityViolationException exception) {
+            // Database-level uniqueness constraint caught as a fallback safety net,
+            // in case two requests raced past the row lock above
             throw new BusinessRuleException("A selected seat was reserved by another customer. Please choose again.");
         }
         return booking;
@@ -144,16 +153,23 @@ public class BookingService {
     @Transactional
     public TicketBooking processPayment(Long bookingId, User actor, PaymentMethod method, boolean successful) {
         ensureBookingActor(actor);
+        // Business-rule validation: each role is locked to its own payment method
+        // (passengers must use the simulated card, staff must use cash)
         if (actor.getRole() == UserRole.PASSENGER && method != PaymentMethod.SIMULATED_CARD) {
             throw new BusinessRuleException("Passengers must use the simulated card checkout.");
         }
         if (actor.getRole() == UserRole.BOOKING_OFFICER && method != PaymentMethod.CASH) {
             throw new BusinessRuleException("Booking officers must record an in-person cash payment.");
         }
+        // Ownership/access-control check
         TicketBooking booking = requireAccessible(bookingId, actor);
+
+        // State validation: can only pay for a booking that's actually awaiting payment
         if (booking.getStatus() != BookingStatus.PENDING_PAYMENT) {
             throw new BusinessRuleException("This booking is not waiting for payment.");
         }
+        // State/time validation: the seat hold has a deadline — if it passed, release the seats
+        // and fail instead of accepting a late payment for seats that may no longer be free
         if (booking.getHoldExpiresAt().isBefore(LocalDateTime.now())) {
             releaseReservations(booking);
             booking.expire();
@@ -181,13 +197,16 @@ public class BookingService {
 
     @Transactional
     public TicketBooking retry(Long bookingId, User actor) {
+        // Ownership/access-control check
         TicketBooking booking = requireAccessible(bookingId, actor);
+        // State validation: only a failed or expired booking is eligible for retry
         if (booking.getStatus() != BookingStatus.PAYMENT_FAILED && booking.getStatus() != BookingStatus.EXPIRED) {
             throw new BusinessRuleException("Only failed or expired bookings can be retried.");
         }
         validateBookableSchedule(booking.getSchedule());
         LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(holdMinutes);
         for (BookingSeat bookingSeat : bookingSeatRepository.findByBookingIdOrderBySeatCarriageCarriageNumberAscSeatSeatNumberAsc(bookingId)) {
+            // Business-rule validation: re-check the seat is still valid for this schedule before re-holding it
             validateSeatBelongsToSchedule(bookingSeat.getSeat(), booking.getSchedule());
             holdSeat(booking.getSchedule(), bookingSeat.getSeat(), booking, expiresAt);
         }
@@ -197,10 +216,12 @@ public class BookingService {
 
     @Transactional
     public void cancel(Long bookingId, User actor) {
+        // Ownership/access-control check
         TicketBooking booking = requireAccessible(bookingId, actor);
         if (booking.getStatus() == BookingStatus.CANCELLED) {
             return;
         }
+        // Business-rule validation: a confirmed booking can't be cancelled once travel day has arrived
         if (booking.getStatus() == BookingStatus.CONFIRMED && !booking.getSchedule().getTravelDate().isAfter(LocalDate.now())) {
             throw new BusinessRuleException("A booking cannot be cancelled on or after its travel date.");
         }
@@ -212,8 +233,12 @@ public class BookingService {
 
     @Transactional(readOnly = true)
     public TicketBooking requireAccessible(Long bookingId, User actor) {
+        // Existence check
         TicketBooking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking was not found."));
+        // Ownership check: a passenger may only access their own booking.
+        // Deliberately throws "not found" rather than "forbidden" so a passenger can't
+        // even confirm that someone else's booking id exists.
         if (actor.getRole() == UserRole.PASSENGER && !booking.getUser().getId().equals(actor.getId())) {
             throw new ResourceNotFoundException("Booking was not found.");
         }
@@ -240,9 +265,12 @@ public class BookingService {
 
     @Transactional
     public TicketBooking updateByStaff(Long bookingId, User actor, AdminBookingForm form) {
+        // Role validation: only booking officers or railway admins may edit a booking record
         ensureStaff(actor);
+        // Existence check (not ownership-scoped — staff can edit any booking)
         TicketBooking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking was not found."));
+        // Manual validation: passenger name is required and can't be blank/whitespace-only
         String name = form.getPassengerName().trim();
         if (name.isBlank()) {
             throw new BusinessRuleException("Passenger name is required.");
@@ -253,6 +281,7 @@ public class BookingService {
 
     @Transactional
     public void deleteByStaff(Long bookingId, User actor) {
+        // Role validation: only booking officers or railway admins may delete a booking record
         ensureStaff(actor);
         TicketBooking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking was not found."));
@@ -263,11 +292,14 @@ public class BookingService {
     }
 
     private void holdSeat(TrainSchedule schedule, Seat seat, TicketBooking booking, LocalDateTime expiresAt) {
+        // Pessimistic lock on the reservation row prevents a race condition where two
+        // bookings both try to claim the same seat at the same instant
         SeatReservation reservation = reservationRepository.lockForScheduleAndSeat(schedule.getId(), seat.getId()).orElse(null);
         if (reservation == null) {
             reservationRepository.saveAndFlush(new SeatReservation(schedule, seat, booking, expiresAt));
             return;
         }
+        // Business-rule validation: if the seat is actively held by a *different* booking, reject it
         if (reservation.blocksBooking(LocalDateTime.now())
                 && (reservation.getBooking() == null || !reservation.getBooking().getId().equals(booking.getId()))) {
             throw new BusinessRuleException("Seat " + seat.getSeatNumber() + " is no longer available.");
@@ -280,18 +312,22 @@ public class BookingService {
     }
 
     private void validateBookableSchedule(TrainSchedule schedule) {
+        // Business-rule validation: schedule must be in a bookable status
         if (schedule.getStatus() != ScheduleStatus.ACTIVE && schedule.getStatus() != ScheduleStatus.DELAYED) {
             throw new BusinessRuleException("This schedule is not available for booking.");
         }
+        // Business-rule validation: can't book a schedule whose travel date has already passed
         if (schedule.getTravelDate().isBefore(LocalDate.now())) {
             throw new BusinessRuleException("Past schedules cannot be booked.");
         }
     }
 
     private void validateSeatBelongsToSchedule(Seat seat, TrainSchedule schedule) {
+        // Business-rule validation: the seat must physically belong to the train running this schedule
         if (!seat.getCarriage().getTrain().getId().equals(schedule.getTrain().getId())) {
             throw new BusinessRuleException("A selected seat does not belong to the scheduled train.");
         }
+        // Business-rule validation: the seat (and its carriage) must currently be in service
         if (!isPhysicalSeatAvailable(seat)) {
             throw new BusinessRuleException("Seat " + seat.getSeatNumber() + " is out of service.");
         }
@@ -306,12 +342,14 @@ public class BookingService {
     }
 
     private void ensureBookingActor(User actor) {
+        // Role validation: only passengers or booking officers may create/pay for bookings
         if (actor.getRole() != UserRole.PASSENGER && actor.getRole() != UserRole.BOOKING_OFFICER) {
             throw new BusinessRuleException("Only passengers and booking officers can create or pay for bookings.");
         }
     }
 
     private void ensureStaff(User actor) {
+        // Role validation: only booking officers or railway admins may manage booking records directly
         if (actor.getRole() != UserRole.BOOKING_OFFICER && actor.getRole() != UserRole.RAILWAY_ADMIN) {
             throw new BusinessRuleException("Only booking staff can manage booking records.");
         }

@@ -186,6 +186,7 @@ public class BookingController {
     }
 
     @GetMapping("/admin/bookings")
+    // Role-based authorization: staff only (booking officers and railway admins)
     @PreAuthorize("hasAnyRole('BOOKING_OFFICER','RAILWAY_ADMIN')")
     public String adminBookings(Model model) {
         model.addAttribute("bookings", bookingService.all());
@@ -195,6 +196,7 @@ public class BookingController {
     @GetMapping("/admin/bookings/{id}/edit")
     @PreAuthorize("hasAnyRole('BOOKING_OFFICER','RAILWAY_ADMIN')")
     public String editAdminBooking(@PathVariable Long id, Authentication authentication, Model model) {
+        // Ownership/access-control check, same requireAccessible pattern used elsewhere
         TicketBooking booking = bookingService.requireAccessible(id, currentUserService.require(authentication));
         if (!model.containsAttribute("bookingForm")) {
             AdminBookingForm form = new AdminBookingForm();
@@ -214,12 +216,26 @@ public class BookingController {
                                      BindingResult result, Authentication authentication, Model model,
                                      RedirectAttributes redirectAttributes) {
         User actor = currentUserService.require(authentication);
+
+        // Field-level validation: checks @Valid annotations on AdminBookingForm (e.g. required fields, formats)
         if (result.hasErrors()) {
             model.addAttribute("booking", bookingService.requireAccessible(id, actor));
             model.addAttribute("bookingSeats", bookingService.seatsForBooking(id));
             return "features/booking/admin-edit";
         }
-        bookingService.updateByStaff(id, actor, form);
+
+        try {
+            // Business-rule validation: rules enforced inside the service layer
+            // (e.g. staff can't set invalid contact details, booking must still be editable)
+            bookingService.updateByStaff(id, actor, form);
+        } catch (BusinessRuleException exception) {
+            // Attach the business-rule failure as a form-level error and redisplay the admin-edit form,
+            // now consistent with how every other create/update endpoint in this controller behaves
+            result.reject("booking", exception.getMessage());
+            model.addAttribute("booking", bookingService.requireAccessible(id, actor));
+            model.addAttribute("bookingSeats", bookingService.seatsForBooking(id));
+            return "features/booking/admin-edit";
+        }
         redirectAttributes.addFlashAttribute("success", "Booking details updated.");
         return "redirect:/admin/bookings";
     }
@@ -228,6 +244,8 @@ public class BookingController {
     @PreAuthorize("hasAnyRole('BOOKING_OFFICER','RAILWAY_ADMIN')")
     public String deleteAdminBooking(@PathVariable Long id, Authentication authentication,
                                      RedirectAttributes redirectAttributes) {
+        // No form input to validate here — but ownership/state rules are still expected to be
+        // enforced inside deleteByStaff (e.g. staff-level authorization, booking must be deletable)
         bookingService.deleteByStaff(id, currentUserService.require(authentication));
         redirectAttributes.addFlashAttribute("success", "Booking deleted and its reserved seats released.");
         return "redirect:/admin/bookings";

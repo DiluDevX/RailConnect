@@ -50,15 +50,24 @@ public class ComplaintController {
     public String create(@Valid @ModelAttribute ComplaintForm complaintForm, BindingResult result,
                          Authentication authentication, Model model, RedirectAttributes redirectAttributes) {
         User user = currentUserService.require(authentication);
+
+        // Field-level validation: checks @Valid annotations on ComplaintForm
         if (result.hasErrors()) return form(model, user, false);
+
+        // Business-rule validation: rules enforced inside the service layer
         try { complaintService.create(user, complaintForm); }
-        catch (BusinessRuleException exception) { result.reject("complaint", exception.getMessage()); return form(model, user, false); }
+        catch (BusinessRuleException exception) {
+            // Attach the business-rule failure as a form-level error and redisplay the form
+            result.reject("complaint", exception.getMessage());
+            return form(model, user, false);
+        }
         redirectAttributes.addFlashAttribute("success", "Complaint submitted successfully.");
         return "redirect:/my-complaints";
     }
 
     @GetMapping("/complaints/{id}")
     public String details(@PathVariable Long id, Authentication authentication, Model model) {
+        // Ownership/access-control check: throws if this complaint doesn't belong to (or isn't visible to) the current user
         model.addAttribute("complaint", complaintService.requireAccessible(id, currentUserService.require(authentication)));
         return "features/complaint/details";
     }
@@ -66,6 +75,7 @@ public class ComplaintController {
     @GetMapping("/complaints/{id}/edit")
     public String editForm(@PathVariable Long id, Authentication authentication, Model model) {
         User user = currentUserService.require(authentication);
+        // Same ownership check as details() — prevents editing another user's complaint
         model.addAttribute("complaintForm", ComplaintForm.from(complaintService.requireAccessible(id, user)));
         model.addAttribute("complaintId", id);
         return form(model, user, true);
@@ -76,15 +86,26 @@ public class ComplaintController {
                          BindingResult result, Authentication authentication, Model model,
                          RedirectAttributes redirectAttributes) {
         User user = currentUserService.require(authentication);
+
+        // Field-level validation, same as create()
         if (result.hasErrors()) { model.addAttribute("complaintId", id); return form(model, user, true); }
+
+        // Business-rule validation — updateByPassenger also enforces ownership/state rules internally
+        // (e.g. can't edit a complaint that's already been responded to)
         try { complaintService.updateByPassenger(id, user, complaintForm); }
-        catch (BusinessRuleException exception) { result.reject("complaint", exception.getMessage()); model.addAttribute("complaintId", id); return form(model, user, true); }
+        catch (BusinessRuleException exception) {
+            result.reject("complaint", exception.getMessage());
+            model.addAttribute("complaintId", id);
+            return form(model, user, true);
+        }
         redirectAttributes.addFlashAttribute("success", "Complaint updated.");
         return "redirect:/complaints/" + id;
     }
 
     @PostMapping("/complaints/{id}/withdraw")
     public String withdraw(@PathVariable Long id, Authentication authentication, RedirectAttributes redirectAttributes) {
+        // No form input to validate here — but ownership/state rules are still expected to be
+        // enforced inside complaintService.withdraw (e.g. can't withdraw someone else's complaint)
         complaintService.withdraw(id, currentUserService.require(authentication));
         redirectAttributes.addFlashAttribute("success", "Complaint withdrawn.");
         return "redirect:/my-complaints";
@@ -106,6 +127,8 @@ public class ComplaintController {
     @PostMapping("/admin/complaints/{id}/respond")
     public String respond(@PathVariable Long id, @RequestParam ComplaintStatus status,
                           @RequestParam String response, RedirectAttributes redirectAttributes) {
+        // No @Valid/BindingResult here — status and response are plain @RequestParam values,
+        // not validated beyond Spring's basic type binding (e.g. status must match a valid enum constant)
         complaintService.respond(id, status, response);
         redirectAttributes.addFlashAttribute("success", "Complaint response saved.");
         return "redirect:/admin/complaints/" + id;
