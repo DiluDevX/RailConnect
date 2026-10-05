@@ -1,0 +1,8 @@
+package lk.sliit.railconnect.features.complaint.domain;
+
+public enum ComplaintEventType{
+    SUBMITTED,
+    UPDATED,
+    WITHDRAWN,
+    RESPONDED
+}
