@@ -37,28 +37,28 @@ The canonical MySQL schema and demo data are versioned Flyway migrations in:
 - `src/main/resources/db/migration/V2__seed_demo_data.sql`
 - `src/main/resources/db/migration/V3__correct_demo_password_hash.sql`
 
-The recommended setup is `docker compose up -d db` followed by
-`mvn spring-boot:run`. Flyway applies missing versions automatically and records them
-in `flyway_schema_history`.
+Docker is optional. With local MySQL running on port 3306, the macOS launcher
+passes its configured connection details to Spring Boot. Flyway applies missing
+versions automatically and records them in `flyway_schema_history`.
 
 ## Windows with local MySQL Server
 
 SQL Server Management Studio is not used by this project. The application is
 configured for **MySQL 8**. On Windows, install MySQL Community Server 8.0 and
-add its `bin` folder to `PATH`, or run the helper from the repository root:
+add its `bin` folder to `PATH`, then use the existing launcher from the repository root:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\database\setup-windows.ps1
+.\database\start-windows.bat
 ```
 
-The helper creates the `railconnect` database and the `railconnect` application
-user. It does not drop tables or delete the existing MySQL data. Start the app
-with the local MySQL port:
+The launcher creates the `railconnect` database using its configured root account.
+It does not drop tables or delete existing MySQL data. When starting manually,
+set the connection details to match your existing MySQL account:
 
 ```powershell
 $env:DB_URL = "jdbc:mysql://127.0.0.1:3306/railconnect?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Colombo"
-$env:DB_USERNAME = "railconnect"
-$env:DB_PASSWORD = "railconnect_dev"
+$env:DB_USERNAME = "root"
+$env:DB_PASSWORD = "root"
 mvn spring-boot:run
 ```
 

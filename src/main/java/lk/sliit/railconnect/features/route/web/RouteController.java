@@ -39,9 +39,17 @@ public class RouteController {
     @PostMapping
     public String create(@Valid @ModelAttribute RouteForm routeForm, BindingResult result, Model model,
                          RedirectAttributes redirectAttributes) {
+        // Field-level validation: checks @Valid annotations on RouteForm
         if (result.hasErrors()) return form(model, false);
+
+        // Business-rule validation: rules that can't be expressed as simple field annotations
+
         try { routeService.create(routeForm); }
-        catch (BusinessRuleException exception) { result.reject("route", exception.getMessage()); return form(model, false); }
+        catch (BusinessRuleException exception) {
+            // Attach the business-rule failure as a form-level error and redisplay the form
+            result.reject("route", exception.getMessage());
+            return form(model, false);
+        }
         redirectAttributes.addFlashAttribute("success", "Route created successfully.");
         return "redirect:/admin/routes";
     }
@@ -56,15 +64,23 @@ public class RouteController {
     @PostMapping("/{id}")
     public String update(@PathVariable Long id, @Valid @ModelAttribute RouteForm routeForm,
                          BindingResult result, Model model, RedirectAttributes redirectAttributes) {
+        // Field-level validation, same as create()
         if (result.hasErrors()) { model.addAttribute("routeId", id); return form(model, true); }
+
+        // Business-rule validation, same pattern as create() but scoped to the existing route id
         try { routeService.update(id, routeForm); }
-        catch (BusinessRuleException exception) { result.reject("route", exception.getMessage()); model.addAttribute("routeId", id); return form(model, true); }
+        catch (BusinessRuleException exception) {
+            result.reject("route", exception.getMessage());
+            model.addAttribute("routeId", id);
+            return form(model, true);
+        }
         redirectAttributes.addFlashAttribute("success", "Route updated successfully.");
         return "redirect:/admin/routes";
     }
 
     @PostMapping("/{id}/toggle")
     public String toggle(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        // No validation here — toggling status has no user input to validate
         routeService.toggleActive(id);
         redirectAttributes.addFlashAttribute("success", "Route status updated.");
         return "redirect:/admin/routes";
