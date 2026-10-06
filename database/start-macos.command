@@ -29,7 +29,8 @@ if ! "${MYSQL_COMMAND}" --host="${MYSQL_HOST}" --port="${MYSQL_PORT}" --user="${
   exit 1
 fi
 
-echo "Starting RailConnect at http://localhost:8080 ..."
+export SERVER_PORT="${SERVER_PORT:-8081}"
+echo "Starting RailConnect at http://localhost:${SERVER_PORT} ..."
 cd "${PROJECT_ROOT}"
 if ! command -v mvn >/dev/null 2>&1; then
   echo "Maven was not found. Install Maven or start the project from your IDE."

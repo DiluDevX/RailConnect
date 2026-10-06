@@ -28,7 +28,7 @@ docker compose up -d db
 mvn spring-boot:run
 ```
 
-Open [http://localhost:8080](http://localhost:8080).
+Open [http://localhost:8081](http://localhost:8081).
 
 MySQL is exposed at `localhost:3307`; Flyway creates and seeds the schema on first
 startup. To stop the application, press `Ctrl+C`. To stop MySQL:

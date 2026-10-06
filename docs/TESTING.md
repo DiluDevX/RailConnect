@@ -55,7 +55,7 @@ or card data: payment is simulated and no card fields exist.
 ```bash
 docker compose ps
 mvn test
-curl -I http://localhost:8080/
+curl -I http://localhost:8081/
 ```
 
 The home search form defaults to the current date. Migrations V6 and V7 seed several

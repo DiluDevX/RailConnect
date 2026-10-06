@@ -5,8 +5,8 @@ import lk.sliit.railconnect.auth.domain.UserRole;
 import lk.sliit.railconnect.features.booking.domain.BookingSeat;
 import lk.sliit.railconnect.features.booking.domain.BookingStatus;
 import lk.sliit.railconnect.features.booking.domain.Payment;
-import lk.sliit.railconnect.features.booking.domain.PaymentStatus;
 import lk.sliit.railconnect.features.booking.domain.PaymentMethod;
+import lk.sliit.railconnect.features.booking.domain.PaymentStatus;
 import lk.sliit.railconnect.features.booking.domain.ReservationStatus;
 import lk.sliit.railconnect.features.booking.domain.SeatReservation;
 import lk.sliit.railconnect.features.booking.domain.TicketBooking;
@@ -53,7 +53,6 @@ public class BookingService {
     private final PaymentRepository paymentRepository;
     private final SeatRepository seatRepository;
     private final ScheduleService scheduleService;
-    private final NotificationService notificationService;
     private final long holdMinutes;
 
     public BookingService(TicketBookingRepository bookingRepository,
@@ -62,7 +61,6 @@ public class BookingService {
                           PaymentRepository paymentRepository,
                           SeatRepository seatRepository,
                           ScheduleService scheduleService,
-                          NotificationService notificationService,
                           @Value("${railconnect.booking.hold-minutes:10}") long holdMinutes) {
         this.bookingRepository = bookingRepository;
         this.bookingSeatRepository = bookingSeatRepository;
@@ -70,7 +68,6 @@ public class BookingService {
         this.paymentRepository = paymentRepository;
         this.seatRepository = seatRepository;
         this.scheduleService = scheduleService;
-        this.notificationService = notificationService;
         this.holdMinutes = holdMinutes;
     }
 
@@ -96,7 +93,7 @@ public class BookingService {
         return seatOptions(scheduleId).stream()
                 .collect(Collectors.groupingBy(option -> option.seat().getCarriage(), LinkedHashMap::new, Collectors.toList()))
                 .entrySet().stream()
-                .map(entry -> new CarriageSeatGroup(entry.getKey(), entry.getValue(), schedule.getTrain().fareFor(entry.getKey().getClassType(), schedule.getBaseFare())
+                .map(entry -> new CarriageSeatGroup(entry.getKey(), entry.getValue(), schedule.fareFor(entry.getKey().getClassType())
                         .setScale(2, RoundingMode.HALF_UP)))
                 .toList();
     }
@@ -115,7 +112,7 @@ public class BookingService {
         }
 
         BigDecimal fare = seats.stream()
-                .map(seat -> schedule.getTrain().fareFor(seat.getCarriage().getClassType(), schedule.getBaseFare()))
+                .map(seat -> schedule.fareFor(seat.getCarriage().getClassType()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .add(RESERVATION_FEE)
                 .setScale(2, RoundingMode.HALF_UP);
@@ -133,7 +130,7 @@ public class BookingService {
         try {
             for (Seat seat : seats) {
                 holdSeat(schedule, seat, booking, expiresAt);
-                BigDecimal seatFare = schedule.getTrain().fareFor(seat.getCarriage().getClassType(), schedule.getBaseFare())
+                BigDecimal seatFare = schedule.fareFor(seat.getCarriage().getClassType())
                         .setScale(2, RoundingMode.HALF_UP);
                 bookingSeatRepository.save(new BookingSeat(booking, seat, seatFare));
             }
@@ -163,11 +160,11 @@ public class BookingService {
         }
         int attempt = Math.toIntExact(paymentRepository.countByBookingId(bookingId) + 1);
         PaymentStatus status = successful ? PaymentStatus.SUCCEEDED : PaymentStatus.FAILED;
-        paymentRepository.save(new Payment(booking, attempt, booking.getTotalAmount(), status, method, transactionReference(method)));
+        paymentRepository.save(new Payment(booking, attempt, booking.getTotalAmount(), status, method,
+                transactionReference(method)));
         if (successful) {
             reservationRepository.findByBookingId(bookingId).forEach(SeatReservation::confirm);
             booking.confirm();
-            notificationService.bookingConfirmed(booking);
         } else {
             releaseReservations(booking);
             booking.markPaymentFailed();
@@ -175,7 +172,6 @@ public class BookingService {
         return booking;
     }
 
-    @Transactional
     public TicketBooking processSimulatedPayment(Long bookingId, User actor, boolean successful) {
         return processPayment(bookingId, actor, PaymentMethod.SIMULATED_CARD, successful);
     }
@@ -208,7 +204,6 @@ public class BookingService {
                 .ifPresent(Payment::refund);
         releaseReservations(booking);
         booking.cancel();
-        notificationService.bookingCancelled(booking);
     }
 
     @Transactional(readOnly = true)
