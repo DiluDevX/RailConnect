@@ -114,6 +114,22 @@ class TrainMaintenanceWebIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "RAILWAY_ADMIN")
+    void trainUpdateRequiresStatusAndShowsFieldValidationMessage() throws Exception {
+        Train train = trainService.create(train("1810", "Status Validation"));
+
+        mockMvc.perform(post("/admin/trains/" + train.getId())
+                        .with(csrf())
+                        .param("trainNumber", "1810")
+                        .param("trainName", "Status Validation")
+                        .param("description", "Alignment check"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Train status is required.")));
+
+        assertThat(trainService.require(train.getId()).getStatus()).isEqualTo(TrainStatus.ACTIVE);
+    }
+
+    @Test
     void onlyAnActiveTrainCanBeScheduled() {
         Train active = trainService.create(train("1803", "Active Service"));
         maintenanceService.create(maintenance(active.getId(), "Future service", MaintenanceStatus.SCHEDULED));

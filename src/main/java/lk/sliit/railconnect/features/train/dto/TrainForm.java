@@ -1,6 +1,7 @@
 package lk.sliit.railconnect.features.train.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lk.sliit.railconnect.features.train.domain.Train;
@@ -18,7 +19,11 @@ public class TrainForm {
     @Size(max = 300)
     private String description;
 
-    private TrainStatus status = TrainStatus.ACTIVE;
+    @NotNull(groups = Update.class, message = "Train status is required.")
+    private TrainStatus status;
+
+    public interface Update {
+    }
 
     public static TrainForm from(Train train) {
         TrainForm form = new TrainForm();
