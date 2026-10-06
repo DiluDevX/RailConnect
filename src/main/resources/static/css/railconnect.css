@@ -101,7 +101,8 @@ button, .button { min-height: 42px; }
 .page-header h1 { margin: 0 0 6px; font-size: 32px; }
 .page-header p { margin: 0; color: var(--muted); }
 .toolbar { display: flex; gap: 12px; align-items: center; }
-.toolbar input { min-width: 280px; height: 44px; padding: 10px 13px; border: 1px solid var(--line); }
+.toolbar input, .toolbar select { height: 44px; padding: 10px 13px; border: 1px solid var(--line); background: white; color: var(--text); }
+.toolbar input { min-width: 280px; }
 
 .stat-grid { grid-template-columns: repeat(4, 1fr); margin-bottom: 28px; }
 .stat-card { padding: 22px; }
@@ -121,7 +122,7 @@ tbody tr:hover { background: #f8fbff; }
 .actions form { display: inline; }
 .status { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
 .status-active, .status-confirmed, .status-succeeded, .status-resolved { color: var(--success); background: var(--success-bg); }
-.status-pending_payment, .status-open, .status-in_review, .status-delayed { color: var(--warning); background: var(--warning-bg); }
+.status-pending_payment, .status-open, .status-in_review, .status-delayed, .status-scheduled, .status-in_progress { color: var(--warning); background: var(--warning-bg); }
 .status-inactive, .status-cancelled, .status-payment_failed, .status-failed, .status-withdrawn, .status-out_of_service { color: var(--danger); background: var(--danger-bg); }
 .status-maintenance, .status-completed, .status-closed, .status-refunded, .status-expired { color: #4f5560; background: #e4e5e7; }
 
@@ -191,7 +192,7 @@ body { display: flex; flex-direction: column; }
 body > main, .admin-shell { flex: 1; }
 .public-header, .admin-topbar, .card, .step-card, .stat-card, .table-wrap, .form-card,
 .seat-panel, .payment-panel, .account-overview, .search-card { background-color: var(--card); }
-.field input, .field select, .field textarea, .seat-panel-toolbar select, .toolbar input { background: var(--card); color: var(--text); }
+.field input, .field select, .field textarea, .seat-panel-toolbar select, .toolbar input, .toolbar select { background: var(--card); color: var(--text); }
 .button:disabled { cursor: not-allowed; opacity: .45; filter: grayscale(.25); }
 .eyebrow, .hero-kicker { margin: 0 0 9px; color: var(--blue); font-size: 12px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
 
@@ -595,7 +596,9 @@ html[data-theme="dark"] .payment-panel { background: var(--card); color: var(--t
 html[data-theme="dark"] .field input,
 html[data-theme="dark"] .field select,
 html[data-theme="dark"] .field textarea,
-html[data-theme="dark"] .seat-panel-toolbar select { background: #172230; color: var(--text); border-color: #3b4b5d; }
+html[data-theme="dark"] .seat-panel-toolbar select,
+html[data-theme="dark"] .toolbar input,
+html[data-theme="dark"] .toolbar select { background: #172230; color: var(--text); border-color: #3b4b5d; }
 html[data-theme="dark"] .booking-progress { background: var(--card); }
 html[data-theme="dark"] .booking-progress .current { background: #142b46; }
 html[data-theme="dark"] .train-coach,

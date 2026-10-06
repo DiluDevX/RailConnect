@@ -1,8 +1,63 @@
-<!DOCTYPE html><html lang="en" xmlns:th="http://www.thymeleaf.org"><head th:replace="~{fragments/layout :: head('Train Management')}"></head><body>
-<div class="admin-shell"><aside th:replace="~{fragments/layout :: adminSidebar('trains')}"></aside><main class="admin-main"><header th:replace="~{fragments/layout :: adminTopbar('Train Management')}"></header>
-<div th:replace="~{fragments/layout :: flash}"></div><div class="admin-content">
-<header class="page-header"><div><h1>Train Management</h1><p>Manage trains while deriving total capacity from active carriages.</p></div><div class="toolbar"><form th:action="@{/admin/trains}" method="get"><input name="q" th:value="${query}" placeholder="Search trains..." aria-label="Search trains"></form><a class="button button-primary" th:href="@{/admin/trains/new}">Add Train</a></div></header>
-<div class="table-wrap"><table><thead><tr><th>Number</th><th>Name</th><th>Capacity</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-<tr th:each="train : ${trains}"><td><strong th:text="${train.trainNumber}"></strong></td><td th:text="${train.trainName}"></td><td th:text="${@trainService.activeCapacity(train.id) + ' seats'}"></td><td><span class="status" th:classappend="${'status-' + #strings.toLowerCase(train.status)}" th:text="${train.status}"></span></td><td class="actions"><a th:href="@{/admin/trains/{id}/edit(id=${train.id})}">Edit</a><form th:action="@{/admin/trains/{id}/toggle(id=${train.id})}" method="post" th:attr="data-confirm=${train.status.name() == 'INACTIVE' ? 'Reactivate this train?' : 'Deactivate this train? Existing records will be preserved.'}"><button class="link-button danger-text" type="submit" th:text="${train.status.name() == 'INACTIVE' ? 'Reactivate' : 'Deactivate'}"></button></form></td></tr>
-<tr th:if="${#lists.isEmpty(trains)}"><td colspan="5"><div class="empty-state">No trains found.</div></td></tr></tbody></table></div>
-</div><footer th:replace="~{fragments/layout :: footer}"></footer></main></div></body></html>
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Train Management')}"></head>
+<body>
+<div class="admin-shell">
+    <aside th:replace="~{fragments/layout :: adminSidebar('trains')}"></aside>
+    <main class="admin-main">
+        <header th:replace="~{fragments/layout :: adminTopbar('Train Management')}"></header>
+        <div th:replace="~{fragments/layout :: flash}"></div>
+        <div class="admin-content">
+            <header class="page-header">
+                <div>
+                    <h1>Train Management</h1>
+                    <p>Manage trains, class fares and maintenance. Capacity still comes from active carriages.</p>
+                </div>
+                <div class="toolbar">
+                    <a class="button button-secondary" th:href="@{/admin/maintenance}">Maintenance</a>
+                    <a class="button button-primary" th:href="@{/admin/trains/new}">Add Train</a>
+                </div>
+            </header>
+            <section class="stat-grid">
+                <article class="stat-card"><span>Scheduled maintenance</span><strong th:text="${scheduledMaintenance}">0</strong></article>
+                <article class="stat-card"><span>In progress</span><strong th:text="${inProgressMaintenance}">0</strong></article>
+                <article class="stat-card"><span>Completed</span><strong th:text="${completedMaintenance}">0</strong></article>
+            </section>
+            <form class="toolbar" th:action="@{/admin/trains}" method="get" style="margin-bottom:18px">
+                <input name="q" th:value="${query}" placeholder="Search by number or name" aria-label="Search trains">
+                <select name="status" aria-label="Filter by status">
+                    <option value="">All statuses</option>
+                    <option th:each="value : ${statuses}" th:value="${value}" th:text="${value}" th:selected="${selectedStatus == value}"></option>
+                </select>
+                <button class="button button-secondary" type="submit">Search</button>
+            </form>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Number</th><th>Name</th><th>Capacity</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody>
+                    <tr th:each="train : ${trains}">
+                        <td><a th:href="@{/admin/trains/{id}(id=${train.id})}"><strong th:text="${train.trainNumber}"></strong></a></td>
+                        <td th:text="${train.trainName}"></td>
+                        <td th:text="${@trainService.activeCapacity(train.id) + ' seats'}"></td>
+                        <td><span class="status" th:classappend="${'status-' + #strings.toLowerCase(train.status)}" th:text="${train.status}"></span></td>
+                        <td class="actions">
+                            <a th:href="@{/admin/trains/{id}(id=${train.id})}">Details</a>
+                            <a th:href="@{/admin/trains/{id}/edit(id=${train.id})}">Edit</a>
+                            <form th:action="@{/admin/trains/{id}/toggle(id=${train.id})}" method="post" th:attr="data-confirm=${train.status.name() == 'INACTIVE' ? 'Reactivate this train?' : 'Deactivate this train? Existing records will be preserved.'}">
+                                <button class="link-button danger-text" type="submit" th:text="${train.status.name() == 'INACTIVE' ? 'Reactivate' : 'Deactivate'}"></button>
+                            </form>
+                            <form th:if="${train.status.name() == 'INACTIVE'}" th:action="@{/admin/trains/{id}/delete(id=${train.id})}" method="post" data-confirm="Permanently delete this train? Deletion is blocked if it has schedule, carriage or maintenance history.">
+                                <button class="link-button danger-text" type="submit">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(trains)}"><td colspan="5"><div class="empty-state">No trains found.</div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+</body>
+</html>

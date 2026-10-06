@@ -7,15 +7,15 @@ UPDATE trains SET first_class_fare = 1800.00, second_class_fare = 1200.00, third
 UPDATE trains SET first_class_fare = 1875.00, second_class_fare = 1250.00, third_class_fare = 937.50 WHERE id = 3;
 
 INSERT INTO carriages (id, train_id, carriage_number, class_type, capacity, status, created_at, updated_at)
-VALUES (4, 2, 'C01', 'THIRD', 12, 'ACTIVE', NOW(), NOW());
+VALUES (4, 2, 'C01', 'THIRD', 12, 'ACTIVE', '2026-10-05 00:00:00.000', '2026-10-05 00:00:00.000');
 
 INSERT INTO seats (id, carriage_id, seat_number, seat_type, status, created_at, updated_at) VALUES
-(33, 4, '01', 'WINDOW', 'ACTIVE', NOW(), NOW()), (34, 4, '02', 'AISLE', 'ACTIVE', NOW(), NOW()),
-(35, 4, '03', 'AISLE', 'ACTIVE', NOW(), NOW()), (36, 4, '04', 'WINDOW', 'ACTIVE', NOW(), NOW()),
-(37, 4, '05', 'WINDOW', 'ACTIVE', NOW(), NOW()), (38, 4, '06', 'AISLE', 'ACTIVE', NOW(), NOW()),
-(39, 4, '07', 'AISLE', 'ACTIVE', NOW(), NOW()), (40, 4, '08', 'WINDOW', 'ACTIVE', NOW(), NOW()),
-(41, 4, '09', 'WINDOW', 'ACTIVE', NOW(), NOW()), (42, 4, '10', 'AISLE', 'ACTIVE', NOW(), NOW()),
-(43, 4, '11', 'AISLE', 'ACTIVE', NOW(), NOW()), (44, 4, '12', 'WINDOW', 'ACTIVE', NOW(), NOW());
+(33, 4, '01', 'WINDOW', 'ACTIVE', '2026-10-05 00:00:00.000', '2026-10-05 00:00:00.000'), (34, 4, '02', 'AISLE', 'ACTIVE', '2026-10-05 00:00:00.000', '2026-10-05 00:00:00.000'),
+(35, 4, '03', 'AISLE', 'ACTIVE', '2026-10-05 00:00:00.000', '2026-10-05 00:00:00.000'), (36, 4, '04', 'WINDOW', 'ACTIVE', '2026-10-05 00:00:00.000', '2026-10-05 00:00:00.000'),
+(37, 4, '05', 'WINDOW', 'ACTIVE', '2026-10-05 00:00:00.000', '2026-10-05 00:00:00.000'), (38, 4, '06', 'AISLE', 'ACTIVE', '2026-10-05 00:00:00.000', '2026-10-05 00:00:00.000'),
+(39, 4, '07', 'AISLE', 'ACTIVE', '2026-10-05 00:00:00.000', '2026-10-05 00:00:00.000'), (40, 4, '08', 'WINDOW', 'ACTIVE', '2026-10-05 00:00:00.000', '2026-10-05 00:00:00.000'),
+(41, 4, '09', 'WINDOW', 'ACTIVE', '2026-10-05 00:00:00.000', '2026-10-05 00:00:00.000'), (42, 4, '10', 'AISLE', 'ACTIVE', '2026-10-05 00:00:00.000', '2026-10-05 00:00:00.000'),
+(43, 4, '11', 'AISLE', 'ACTIVE', '2026-10-05 00:00:00.000', '2026-10-05 00:00:00.000'), (44, 4, '12', 'WINDOW', 'ACTIVE', '2026-10-05 00:00:00.000', '2026-10-05 00:00:00.000');
 
 CREATE TABLE password_reset_tokens (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,

@@ -33,10 +33,10 @@ class ModuleCrudIntegrationTest {
 
     @Test
     void trainCanBeCreatedUpdatedReadAndDeactivated() {
-        TrainForm createForm = trainForm("T-CRUD", "Original Name");
+        TrainForm createForm = trainForm("1601", "Original Name");
         Train created = trainService.create(createForm);
 
-        TrainForm updateForm = trainForm("T-CRUD", "Updated Name");
+        TrainForm updateForm = trainForm("1601", "Updated Name");
         updateForm.setStatus(TrainStatus.ACTIVE);
         trainService.update(created.getId(), updateForm);
         trainService.toggleActive(created.getId());
@@ -48,7 +48,7 @@ class ModuleCrudIntegrationTest {
 
     @Test
     void carriageCreationGeneratesItsPhysicalSeats() {
-        Train train = trainService.create(trainForm("T-SEATS", "Seat Test"));
+        Train train = trainService.create(trainForm("1602", "Seat Test"));
         CarriageForm form = new CarriageForm();
         form.setTrainId(train.getId());
         form.setCarriageNumber("A01");

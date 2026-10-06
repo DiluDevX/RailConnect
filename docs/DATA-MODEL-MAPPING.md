@@ -6,6 +6,7 @@ This document states how the conceptual RailConnect EER model is represented by 
 | --- | --- | --- | --- |
 | USER | `users` | Registration, login and authenticated header | A user makes bookings and submits complaints |
 | TRAIN | `trains` | Train Management | A train has carriages and operates schedules |
+| TRAIN MAINTENANCE | `maintenance` | Maintenance Management | Each maintenance record belongs to one train |
 | ROUTE | `routes` | Route Management | A route is used by schedules |
 | TRAIN_SCHEDULE | `train_schedules` | Schedule Management and journey search | Each schedule references one train and one route |
 | CARRIAGE | `carriages` | Carriage Inventory | Each carriage belongs to one train |
