@@ -61,7 +61,8 @@ class BookingServiceIntegrationTest {
         Train train = trainRepository.save(new Train("T-BOOK", "Booking Test", null));
         Route route = routeRepository.save(new Route("R-BOOK", "Colombo", "Kandy", new BigDecimal("120")));
         schedule = scheduleRepository.save(new TrainSchedule("S-BOOK", train, route, LocalDate.now().plusDays(5),
-                LocalTime.of(8, 0), LocalTime.of(10, 0), new BigDecimal("1000")));
+                LocalTime.of(8, 0), LocalTime.of(10, 0),
+                new BigDecimal("1800.00"), new BigDecimal("1200.00"), new BigDecimal("900.00")));
         CarriageForm carriageForm = new CarriageForm();
         carriageForm.setTrainId(train.getId());
         carriageForm.setCarriageNumber("A01");

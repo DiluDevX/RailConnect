@@ -28,6 +28,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
+set "SERVER_PORT=8080"
 echo Starting RailConnect at http://localhost:8080 ...
 cd /d "%~dp0.."
 call mvn spring-boot:run

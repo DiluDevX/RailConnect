@@ -13,6 +13,7 @@ import java.util.Optional;
 public interface CarriageRepository extends JpaRepository<Carriage, Long> {
     boolean existsByTrainIdAndCarriageNumberIgnoreCase(Long trainId, String carriageNumber);
     boolean existsByTrainIdAndCarriageNumberIgnoreCaseAndIdNot(Long trainId, String carriageNumber, Long id);
+    boolean existsByTrain_Id(Long trainId);
     @EntityGraph(attributePaths = "train")
     List<Carriage> findAllByOrderByTrainTrainNumberAscCarriageNumberAsc();
 

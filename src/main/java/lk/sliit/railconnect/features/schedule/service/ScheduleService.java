@@ -90,7 +90,8 @@ public class ScheduleService {
         Train train = trainService.require(form.getTrainId());
         Route route = routeService.require(form.getRouteId());
         return scheduleRepository.save(new TrainSchedule(form.getScheduleCode().trim(), train, route,
-                form.getTravelDate(), form.getDepartureTime(), form.getArrivalTime(), form.getBaseFare()));
+                form.getTravelDate(), form.getDepartureTime(), form.getArrivalTime(),
+                form.getFirstClassFare(), form.getSecondClassFare(), form.getThirdClassFare()));
     }
 
     @Transactional
@@ -99,7 +100,8 @@ public class ScheduleService {
         validate(form, id);
         schedule.update(form.getScheduleCode().trim(), trainService.require(form.getTrainId()),
                 routeService.require(form.getRouteId()), form.getTravelDate(), form.getDepartureTime(),
-                form.getArrivalTime(), form.getBaseFare(), form.getStatus());
+                form.getArrivalTime(), form.getFirstClassFare(), form.getSecondClassFare(),
+                form.getThirdClassFare(), form.getStatus());
         return schedule;
     }
 

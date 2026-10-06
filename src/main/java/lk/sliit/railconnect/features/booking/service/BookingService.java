@@ -94,7 +94,7 @@ public class BookingService {
         return seatOptions(scheduleId).stream()
                 .collect(Collectors.groupingBy(option -> option.seat().getCarriage(), LinkedHashMap::new, Collectors.toList()))
                 .entrySet().stream()
-                .map(entry -> new CarriageSeatGroup(entry.getKey(), entry.getValue(), schedule.getTrain().fareFor(entry.getKey().getClassType(), schedule.getBaseFare())
+                .map(entry -> new CarriageSeatGroup(entry.getKey(), entry.getValue(), schedule.fareFor(entry.getKey().getClassType())
                         .setScale(2, RoundingMode.HALF_UP)))
                 .toList();
     }
@@ -118,7 +118,7 @@ public class BookingService {
         }
 
         BigDecimal fare = seats.stream()
-                .map(seat -> schedule.getTrain().fareFor(seat.getCarriage().getClassType(), schedule.getBaseFare()))
+                .map(seat -> schedule.fareFor(seat.getCarriage().getClassType()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .add(RESERVATION_FEE)
                 .setScale(2, RoundingMode.HALF_UP);
@@ -138,7 +138,7 @@ public class BookingService {
                 // Concurrency-safe seat hold: locks the reservation row so two customers
                 // can't both grab the same seat at the same time
                 holdSeat(schedule, seat, booking, expiresAt);
-                BigDecimal seatFare = schedule.getTrain().fareFor(seat.getCarriage().getClassType(), schedule.getBaseFare())
+                BigDecimal seatFare = schedule.fareFor(seat.getCarriage().getClassType())
                         .setScale(2, RoundingMode.HALF_UP);
                 bookingSeatRepository.save(new BookingSeat(booking, seat, seatFare));
             }

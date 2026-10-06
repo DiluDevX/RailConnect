@@ -1,6 +1,7 @@
 package lk.sliit.railconnect.features.train.web;
 
 import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
 import lk.sliit.railconnect.features.train.domain.MaintenanceStatus;
 import lk.sliit.railconnect.features.train.domain.TrainStatus;
 import lk.sliit.railconnect.features.train.dto.TrainForm;
@@ -10,6 +11,7 @@ import lk.sliit.railconnect.shared.exception.BusinessRuleException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -79,7 +81,8 @@ public class TrainController {
     }
 
     @PostMapping("/{id}")
-    public String update(@PathVariable Long id, @Valid @ModelAttribute TrainForm trainForm,
+    public String update(@PathVariable Long id,
+                         @Validated({Default.class, TrainForm.Update.class}) @ModelAttribute TrainForm trainForm,
                          BindingResult result, Model model, RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) { model.addAttribute("trainId", id); return form(model, true); }
         try { trainService.update(id, trainForm); }

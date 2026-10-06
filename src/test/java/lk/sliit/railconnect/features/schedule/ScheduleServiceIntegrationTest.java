@@ -46,7 +46,9 @@ class ScheduleServiceIntegrationTest {
         form.setTravelDate(date);
         form.setDepartureTime(departure);
         form.setArrivalTime(arrival);
-        form.setBaseFare(new BigDecimal("1000"));
+        form.setFirstClassFare(new BigDecimal("1800.00"));
+        form.setSecondClassFare(new BigDecimal("1200.00"));
+        form.setThirdClassFare(new BigDecimal("900.00"));
         return form;
     }
 }
