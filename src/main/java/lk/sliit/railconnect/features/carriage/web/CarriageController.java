@@ -43,9 +43,17 @@ public class CarriageController {
     @PostMapping
     public String create(@Valid @ModelAttribute CarriageForm carriageForm, BindingResult result,
                          Model model, RedirectAttributes redirectAttributes) {
+        // Field-level validation: checks @Valid annotations on CarriageForm (e.g. required fields, formats)
         if (result.hasErrors()) return form(model, false);
+
+        // Business-rule validation: rules enforced inside the service layer
+        // (e.g. seat layout must be valid for the chosen carriage class, train must exist)
         try { carriageService.create(carriageForm); }
-        catch (BusinessRuleException exception) { result.reject("carriage", exception.getMessage()); return form(model, false); }
+        catch (BusinessRuleException exception) {
+            // Attach the business-rule failure as a form-level error and redisplay the form
+            result.reject("carriage", exception.getMessage());
+            return form(model, false);
+        }
         redirectAttributes.addFlashAttribute("success", "Carriage and seats created successfully.");
         return "redirect:/admin/carriages";
     }
@@ -60,9 +68,17 @@ public class CarriageController {
     @PostMapping("/{id}")
     public String update(@PathVariable Long id, @Valid @ModelAttribute CarriageForm carriageForm,
                          BindingResult result, Model model, RedirectAttributes redirectAttributes) {
+        // Field-level validation, same as create()
         if (result.hasErrors()) { model.addAttribute("carriageId", id); return form(model, true); }
+
+        // Business-rule validation, same pattern as create() but scoped to the existing carriage id
+        // (e.g. can't shrink seat count below already-booked seats)
         try { carriageService.update(id, carriageForm); }
-        catch (BusinessRuleException exception) { result.reject("carriage", exception.getMessage()); model.addAttribute("carriageId", id); return form(model, true); }
+        catch (BusinessRuleException exception) {
+            result.reject("carriage", exception.getMessage());
+            model.addAttribute("carriageId", id);
+            return form(model, true);
+        }
         redirectAttributes.addFlashAttribute("success", "Carriage updated successfully.");
         return "redirect:/admin/carriages";
     }
@@ -77,6 +93,8 @@ public class CarriageController {
     @PostMapping("/{carriageId}/seats/{seatId}/toggle")
     public String toggleSeat(@PathVariable Long carriageId, @PathVariable Long seatId,
                              RedirectAttributes redirectAttributes) {
+        // No form input to validate here — but toggleSeat is still expected to enforce
+        // internal state rules (e.g. can't disable a seat that's part of an active booking)
         carriageService.toggleSeat(seatId);
         redirectAttributes.addFlashAttribute("success", "Seat status updated.");
         return "redirect:/admin/carriages/" + carriageId + "/seats";
@@ -84,6 +102,7 @@ public class CarriageController {
 
     @PostMapping("/{id}/toggle")
     public String toggle(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        // No form input to validate here — toggling status has no user input to check
         carriageService.toggleCarriage(id);
         redirectAttributes.addFlashAttribute("success", "Carriage status updated.");
         return "redirect:/admin/carriages";

@@ -41,14 +41,22 @@ public class ScheduleController {
                          @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
                          @RequestParam(defaultValue = "1") int passengers,
                          Authentication authentication, Model model) {
+        // Manual role check: staff/admin accounts are blocked from the passenger-facing search,
+        // only anonymous users, passengers, or booking officers may proceed
         if (authentication != null && authentication.getAuthorities().stream().noneMatch(authority ->
                 authority.getAuthority().equals("ROLE_ANONYMOUS")
                         || authority.getAuthority().equals("ROLE_PASSENGER")
                         || authority.getAuthority().equals("ROLE_BOOKING_OFFICER"))) {
             throw new AccessDeniedException("Staff administrators cannot use passenger booking search.");
         }
+
+        // Manual input sanitization: clamp passenger count into an allowed range (1–10)
+        // rather than trusting the raw query param
         int requestedPassengers = Math.max(1, Math.min(passengers, 10));
+
+        // Manual default: fall back to today's date if none was supplied
         LocalDate requestedDate = date == null ? LocalDate.now() : date;
+
         model.addAttribute("schedules", scheduleService.search(from, to, requestedDate, requestedPassengers));
         model.addAttribute("from", from);
         model.addAttribute("to", to);
@@ -75,9 +83,17 @@ public class ScheduleController {
     @PostMapping("/admin/schedules")
     public String create(@Valid @ModelAttribute ScheduleForm scheduleForm, BindingResult result,
                          Model model, RedirectAttributes redirectAttributes) {
+        // Field-level validation: checks @Valid annotations on ScheduleForm (e.g. required fields, formats)
         if (result.hasErrors()) return form(model, false);
+
+        // Business-rule validation: rules enforced inside the service layer
+        // (e.g. train/route must exist, departure time must be valid, no conflicting schedule)
         try { scheduleService.create(scheduleForm); }
-        catch (BusinessRuleException exception) { result.reject("schedule", exception.getMessage()); return form(model, false); }
+        catch (BusinessRuleException exception) {
+            // Attach the business-rule failure as a form-level error and redisplay the form
+            result.reject("schedule", exception.getMessage());
+            return form(model, false);
+        }
         redirectAttributes.addFlashAttribute("success", "Schedule created successfully.");
         return "redirect:/admin/schedules";
     }
@@ -92,15 +108,25 @@ public class ScheduleController {
     @PostMapping("/admin/schedules/{id}")
     public String update(@PathVariable Long id, @Valid @ModelAttribute ScheduleForm scheduleForm,
                          BindingResult result, Model model, RedirectAttributes redirectAttributes) {
+        // Field-level validation, same as create()
         if (result.hasErrors()) { model.addAttribute("scheduleId", id); return form(model, true); }
+
+        // Business-rule validation, same pattern as create() but scoped to the existing schedule id
+        // (e.g. can't move a schedule that already has confirmed bookings into a conflicting slot)
         try { scheduleService.update(id, scheduleForm); }
-        catch (BusinessRuleException exception) { result.reject("schedule", exception.getMessage()); model.addAttribute("scheduleId", id); return form(model, true); }
+        catch (BusinessRuleException exception) {
+            result.reject("schedule", exception.getMessage());
+            model.addAttribute("scheduleId", id);
+            return form(model, true);
+        }
         redirectAttributes.addFlashAttribute("success", "Schedule updated successfully.");
         return "redirect:/admin/schedules";
     }
 
     @PostMapping("/admin/schedules/{id}/cancel")
     public String cancel(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        // No form input to validate here — but cancel() is still expected to enforce
+        // internal state rules (e.g. can't cancel a schedule that's already departed)
         scheduleService.cancel(id);
         redirectAttributes.addFlashAttribute("success", "Schedule cancelled. Historical records were preserved.");
         return "redirect:/admin/schedules";

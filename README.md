@@ -25,7 +25,7 @@ Requirements: Java 17+, Maven 3.9+, Docker Desktop.
 
 ```bash
 docker compose up -d db
-mvn spring-boot:run
+DB_URL='jdbc:mysql://127.0.0.1:3307/railconnect?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Colombo' DB_USERNAME=railconnect DB_PASSWORD=railconnect_dev mvn spring-boot:run
 ```
 
 Open [http://localhost:8081](http://localhost:8081).
@@ -156,7 +156,8 @@ The tested flows and remaining manual checks are documented in
 
 ## Configuration
 
-Defaults work with `docker-compose.yml`. Override them when needed:
+Defaults use local MySQL on port 3306. For `docker-compose.yml`, use port 3307
+and the Docker database credentials:
 
 ```bash
 export DB_URL='jdbc:mysql://localhost:3307/railconnect?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Colombo'
