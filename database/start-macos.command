@@ -29,7 +29,7 @@ if ! "${MYSQL_COMMAND}" --host="${MYSQL_HOST}" --port="${MYSQL_PORT}" --user="${
   exit 1
 fi
 
-export SERVER_PORT="${SERVER_PORT:-8081}"
+export SERVER_PORT="${SERVER_PORT:-8080}"
 echo "Starting RailConnect at http://localhost:${SERVER_PORT} ..."
 cd "${PROJECT_ROOT}"
 if ! command -v mvn >/dev/null 2>&1; then
