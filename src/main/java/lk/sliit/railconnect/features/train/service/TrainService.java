@@ -2,9 +2,11 @@ package lk.sliit.railconnect.features.train.service;
 
 import lk.sliit.railconnect.features.carriage.repository.CarriageRepository;
 import lk.sliit.railconnect.features.carriage.domain.CarriageStatus;
+import lk.sliit.railconnect.features.schedule.repository.TrainScheduleRepository;
 import lk.sliit.railconnect.features.train.domain.Train;
 import lk.sliit.railconnect.features.train.domain.TrainStatus;
 import lk.sliit.railconnect.features.train.dto.TrainForm;
+import lk.sliit.railconnect.features.train.repository.MaintenanceRepository;
 import lk.sliit.railconnect.features.train.repository.TrainRepository;
 import lk.sliit.railconnect.shared.exception.BusinessRuleException;
 import lk.sliit.railconnect.shared.exception.ResourceNotFoundException;
@@ -20,10 +22,15 @@ public class TrainService {
 
     private final TrainRepository trainRepository;
     private final CarriageRepository carriageRepository;
+    private final TrainScheduleRepository scheduleRepository;
+    private final MaintenanceRepository maintenanceRepository;
 
-    public TrainService(TrainRepository trainRepository, CarriageRepository carriageRepository) {
+    public TrainService(TrainRepository trainRepository, CarriageRepository carriageRepository,
+                        TrainScheduleRepository scheduleRepository, MaintenanceRepository maintenanceRepository) {
         this.trainRepository = trainRepository;
         this.carriageRepository = carriageRepository;
+        this.scheduleRepository = scheduleRepository;
+        this.maintenanceRepository = maintenanceRepository;
     }
 
     @Transactional(readOnly = true)
@@ -81,6 +88,21 @@ public class TrainService {
     public void deactivate(Long id) {
         Train train = require(id);
         train.update(train.getTrainNumber(), train.getTrainName(), train.getDescription(), TrainStatus.INACTIVE);
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        Train train = require(id);
+        if (train.getStatus() != TrainStatus.INACTIVE) {
+            throw new BusinessRuleException("Deactivate the train before deleting it.");
+        }
+        if (scheduleRepository.existsByTrain_Id(id)) {
+            throw new BusinessRuleException("This train has schedule history and cannot be permanently deleted. Cancelling active schedules does not remove their history; keep this train inactive to preserve the linked schedule and booking records.");
+        }
+        if (carriageRepository.existsByTrain_Id(id) || maintenanceRepository.existsByTrain_Id(id)) {
+            throw new BusinessRuleException("This train has carriage or maintenance history and cannot be permanently deleted while those records are retained.");
+        }
+        trainRepository.delete(train);
     }
 
     @Transactional(readOnly = true)

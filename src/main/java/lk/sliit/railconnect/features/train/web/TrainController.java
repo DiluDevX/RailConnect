@@ -109,6 +109,17 @@ public class TrainController {
         return "redirect:/admin/trains/" + id;
     }
 
+    @PostMapping("/{id}/delete")
+    public String delete(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            trainService.delete(id);
+            redirectAttributes.addFlashAttribute("success", "Train deleted.");
+        } catch (BusinessRuleException exception) {
+            redirectAttributes.addFlashAttribute("error", exception.getMessage());
+        }
+        return "redirect:/admin/trains";
+    }
+
     private String form(Model model, boolean editing) {
         model.addAttribute("statuses", TrainStatus.values());
         model.addAttribute("editing", editing);

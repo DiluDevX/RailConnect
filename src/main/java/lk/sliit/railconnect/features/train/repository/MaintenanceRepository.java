@@ -12,6 +12,7 @@ import java.util.Optional;
 
 public interface MaintenanceRepository extends JpaRepository<Maintenance, Long> {
     long countByStatus(MaintenanceStatus status);
+    boolean existsByTrain_Id(Long trainId);
 
     @Query("SELECT m FROM Maintenance m JOIN FETCH m.train WHERE m.id = :id")
     Optional<Maintenance> findDetailedById(@Param("id") Long id);

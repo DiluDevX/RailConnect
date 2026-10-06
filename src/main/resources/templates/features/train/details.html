@@ -37,6 +37,9 @@
                             <form th:if="${train.status.name() != 'INACTIVE'}" th:action="@{/admin/trains/{id}/deactivate(id=${train.id})}" method="post" data-confirm="Deactivate this train? Existing bookings and maintenance history will be preserved.">
                                 <button class="button button-danger" type="submit">Deactivate</button>
                             </form>
+                            <form th:if="${train.status.name() == 'INACTIVE'}" th:action="@{/admin/trains/{id}/delete(id=${train.id})}" method="post" data-confirm="Permanently delete this train? Deletion is blocked if it has schedule, carriage or maintenance history.">
+                                <button class="button button-danger" type="submit">Delete train</button>
+                            </form>
                         </div>
                     </div>
                 </section>

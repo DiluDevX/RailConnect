@@ -46,6 +46,9 @@
                             <form th:action="@{/admin/trains/{id}/toggle(id=${train.id})}" method="post" th:attr="data-confirm=${train.status.name() == 'INACTIVE' ? 'Reactivate this train?' : 'Deactivate this train? Existing records will be preserved.'}">
                                 <button class="link-button danger-text" type="submit" th:text="${train.status.name() == 'INACTIVE' ? 'Reactivate' : 'Deactivate'}"></button>
                             </form>
+                            <form th:if="${train.status.name() == 'INACTIVE'}" th:action="@{/admin/trains/{id}/delete(id=${train.id})}" method="post" data-confirm="Permanently delete this train? Deletion is blocked if it has schedule, carriage or maintenance history.">
+                                <button class="link-button danger-text" type="submit">Delete</button>
+                            </form>
                         </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(trains)}"><td colspan="5"><div class="empty-state">No trains found.</div></td></tr>
