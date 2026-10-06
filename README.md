@@ -28,7 +28,7 @@ docker compose up -d db
 DB_URL='jdbc:mysql://127.0.0.1:3307/railconnect?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Colombo' DB_USERNAME=railconnect DB_PASSWORD=railconnect_dev mvn spring-boot:run
 ```
 
-Open [http://localhost:8081](http://localhost:8081).
+Open [http://localhost:8080](http://localhost:8080).
 
 MySQL is exposed at `localhost:3307`; Flyway creates and seeds the schema on first
 startup. To stop the application, press `Ctrl+C`. To stop MySQL:
