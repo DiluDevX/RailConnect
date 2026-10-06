@@ -42,6 +42,7 @@
     <nav aria-label="Administration">
         <a th:classappend="${active == 'dashboard'} ? 'active'" th:href="@{/admin}"><span class="material-symbols-outlined">dashboard</span>Dashboard</a>
         <a sec:authorize="hasRole('RAILWAY_ADMIN')" th:classappend="${active == 'trains'} ? 'active'" th:href="@{/admin/trains}"><span class="material-symbols-outlined">train</span>Trains</a>
+        <a sec:authorize="hasRole('RAILWAY_ADMIN')" th:classappend="${active == 'maintenance'} ? 'active'" th:href="@{/admin/maintenance}"><span class="material-symbols-outlined">build</span>Maintenance</a>
         <a sec:authorize="hasRole('RAILWAY_ADMIN')" th:classappend="${active == 'routes'} ? 'active'" th:href="@{/admin/routes}"><span class="material-symbols-outlined">directions_railway</span>Routes</a>
         <a sec:authorize="hasRole('RAILWAY_ADMIN')" th:classappend="${active == 'schedules'} ? 'active'" th:href="@{/admin/schedules}"><span class="material-symbols-outlined">calendar_today</span>Schedules</a>
         <a sec:authorize="hasRole('RAILWAY_ADMIN')" th:classappend="${active == 'carriages'} ? 'active'" th:href="@{/admin/carriages}"><span class="material-symbols-outlined">train</span>Carriages</a>

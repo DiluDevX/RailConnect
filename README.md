@@ -99,7 +99,7 @@ variety immediately after startup.
 
 | Member | Major function | Package |
 |---|---|---|
-| Rukshana | Train Management | `features/train` |
+| Rukshana | Train and Maintenance Management | `features/train` |
 | Kenula | Route Management | `features/route` |
 | Oneli | Train Schedule Management | `features/schedule` |
 | Kaveen | Train Carriage and Seat Management | `features/carriage` |

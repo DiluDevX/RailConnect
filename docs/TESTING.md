@@ -64,3 +64,15 @@ curl -I http://localhost:8080/
 The home search form defaults to the current date. Migrations V6 and V7 seed several
 current-day and future demo schedules across multiple trains and routes, while later
 schedules remain available for date-specific testing.
+# Maintenance integration verification
+
+Run `mvn clean test package` for the maintenance, booking-expiry and Observer
+regressions. Maintenance tests include create/read/update/cancel/delete, history
+preservation, role checks, and retaining legacy demo train identifiers.
+
+MySQL upgrades must run V9/V10 after the unchanged V1–V8 migrations. Test both a
+fresh database and a copy of an existing database with
+`SPRING_JPA_HIBERNATE_DDL_AUTO=validate`, so Hibernate cannot silently hide missing
+schema migrations. Compare old effective class fares against migrated schedule
+fares, and ensure users/bookings/payments/complaints are unchanged. New bookings
+use the schedule's class fare plus the existing reservation fee.

@@ -960,3 +960,7 @@ td > .empty-state { margin: 8px 0; }
     .card, .form-card { border: 1px solid #777; box-shadow: none; }
     .booking-layout { grid-template-columns: 1fr; }
 }
+
+/* Train maintenance controls, sharing the current design tokens. */
+.toolbar select { min-height: 42px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--card); color: var(--text); }
+.status-scheduled, .status-in_progress { color: var(--warning); background: var(--warning-bg); }

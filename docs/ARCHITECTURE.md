@@ -8,6 +8,21 @@ Browser -> Controller -> Service -> Repository -> MySQL
 
 ## Layer responsibilities
 
+### Train maintenance and schedule pricing integration
+
+Maintenance CRUD, filtering and train history live in `features/train`. Recording
+maintenance does not automatically change the train's status. Completed/cancelled
+records cannot be reopened, and in-progress records cannot be reset to scheduled
+to bypass deletion guards. Only unused inactive trains can be permanently deleted.
+
+New/changed train numbers must be four digits. Existing identifiers, including
+the `DEMO-*` seed trains, can be retained when editing their other details.
+
+Fares now belong to each schedule, not the train form. V9 adds maintenance; V10
+copies each schedule's previous effective class prices before removing the old
+base-fare column. Existing booking/payment snapshots are not repriced. Historical
+V1–V8 migrations remain unchanged, so existing databases retain valid checksums.
+
 - Controllers handle URLs, form binding, validation results and redirects.
 - Services implement business rules and transaction boundaries.
 - Repositories contain persistence queries.
@@ -57,6 +72,7 @@ Six separately deployed services would require API versioning, distributed
 transactions, service discovery, more Docker containers and failure recovery.
 That complexity would distract from the assessed Java/OOP/database work. Feature
 packages give clear ownership while preserving one reliable transaction boundary.
+
 # Complaint module compatibility
 
 The running Spring Boot application uses `lk.sliit.railconnect.features.complaint`

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${editing ? 'Edit Maintenance' : 'Add Maintenance'})}"></head>
+<body>
+<div class="admin-shell">
+    <aside th:replace="~{fragments/layout :: adminSidebar('maintenance')}"></aside>
+    <main class="admin-main">
+        <header th:replace="~{fragments/layout :: adminTopbar(${editing ? 'Edit Maintenance' : 'Add Maintenance'})}"></header>
+        <div class="admin-content">
+            <header class="page-header">
+                <div>
+                    <h1 th:text="${editing ? 'Edit Maintenance' : 'Add Maintenance'}">Add Maintenance</h1>
+                    <p>Link the work to an existing train. Saving here does not change that train's operating status.</p>
+                </div>
+            </header>
+            <form class="form-card" th:object="${maintenanceForm}" th:action="${editing ? '/admin/maintenance/' + maintenanceId : '/admin/maintenance'}" method="post">
+                <div th:if="${#fields.hasGlobalErrors()}" class="form-errors" th:each="error : ${#fields.globalErrors()}" th:text="${error}"></div>
+                <div class="field">
+                    <label for="trainId">Train</label>
+                    <select id="trainId" th:field="*{trainId}" required>
+                        <option value="">Select a train</option>
+                        <option th:each="train : ${trains}" th:value="${train.id}" th:text="${train.trainNumber + ' · ' + train.trainName + ' (' + train.status + ')'}"></option>
+                    </select>
+                    <span class="field-error" th:errors="*{trainId}"></span>
+                </div>
+                <div class="form-grid" style="margin-top:18px">
+                    <div class="field">
+                        <label for="maintenanceType">Maintenance type</label>
+                        <input id="maintenanceType" th:field="*{maintenanceType}" required placeholder="Engine service">
+                        <span class="field-error" th:errors="*{maintenanceType}"></span>
+                    </div>
+                    <div class="field">
+                        <label for="maintenanceDate">Date</label>
+                        <input id="maintenanceDate" type="date" th:field="*{maintenanceDate}" required>
+                        <span class="field-error" th:errors="*{maintenanceDate}"></span>
+                    </div>
+                </div>
+                <div class="field" style="margin-top:18px">
+                    <label for="description">Description</label>
+                    <textarea id="description" th:field="*{description}" placeholder="Optional notes"></textarea>
+                    <span class="field-error" th:errors="*{description}"></span>
+                </div>
+                <div class="field" style="margin-top:18px">
+                    <label for="status">Status</label>
+                    <select id="status" th:field="*{status}">
+                        <option th:each="value : ${statuses}" th:value="${value}" th:text="${value}"></option>
+                    </select>
+                    <span class="field-error" th:errors="*{status}"></span>
+                </div>
+                <div class="form-actions">
+                    <a class="button button-secondary" th:href="@{/admin/maintenance}">Cancel</a>
+                    <button class="button button-primary" type="submit">Save maintenance</button>
+                </div>
+            </form>
+        </div>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+</body>
+</html>

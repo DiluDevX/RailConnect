@@ -78,15 +78,10 @@ public class Train extends BaseEntity {
                 : configured;
     }
 
-    public void update(String trainNumber, String trainName, String description,
-                       BigDecimal firstClassFare, BigDecimal secondClassFare, BigDecimal thirdClassFare,
-                       TrainStatus status) {
+    public void update(String trainNumber, String trainName, String description, TrainStatus status) {
         this.trainNumber = trainNumber;
         this.trainName = trainName;
         this.description = description;
-        this.firstClassFare = firstClassFare;
-        this.secondClassFare = secondClassFare;
-        this.thirdClassFare = thirdClassFare;
         this.status = status;
     }
 }

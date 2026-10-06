@@ -59,7 +59,8 @@ class BookingExpiryIntegrationTest {
             Train train = trainRepository.save(new Train("T-EXPIRY", "Expiry Test", null));
             Route route = routeRepository.save(new Route("R-EXPIRY", "Colombo", "Kandy", new BigDecimal("120")));
             TrainSchedule schedule = scheduleRepository.save(new TrainSchedule("S-EXPIRY", train, route,
-                    LocalDate.now().plusDays(5), LocalTime.of(8, 0), LocalTime.of(10, 0), new BigDecimal("1000")));
+                    LocalDate.now().plusDays(5), LocalTime.of(8, 0), LocalTime.of(10, 0),
+                    new BigDecimal("1500"), new BigDecimal("1000"), new BigDecimal("750")));
             CarriageForm carriage = new CarriageForm();
             carriage.setTrainId(train.getId());
             carriage.setCarriageNumber("A01");

@@ -41,8 +41,14 @@ public class TrainSchedule extends BaseEntity {
     @Column(nullable = false)
     private LocalTime arrivalTime;
 
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal baseFare;
+    @Column(name = "first_class_fare", nullable = false, precision = 10, scale = 2)
+    private BigDecimal firstClassFare;
+
+    @Column(name = "second_class_fare", nullable = false, precision = 10, scale = 2)
+    private BigDecimal secondClassFare;
+
+    @Column(name = "third_class_fare", nullable = false, precision = 10, scale = 2)
+    private BigDecimal thirdClassFare;
 
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)
@@ -53,14 +59,17 @@ public class TrainSchedule extends BaseEntity {
     }
 
     public TrainSchedule(String scheduleCode, Train train, Route route, LocalDate travelDate,
-                         LocalTime departureTime, LocalTime arrivalTime, BigDecimal baseFare) {
+                         LocalTime departureTime, LocalTime arrivalTime,
+                         BigDecimal firstClassFare, BigDecimal secondClassFare, BigDecimal thirdClassFare) {
         this.scheduleCode = scheduleCode;
         this.train = train;
         this.route = route;
         this.travelDate = travelDate;
         this.departureTime = departureTime;
         this.arrivalTime = arrivalTime;
-        this.baseFare = baseFare;
+        this.firstClassFare = firstClassFare;
+        this.secondClassFare = secondClassFare;
+        this.thirdClassFare = thirdClassFare;
     }
 
     public String getScheduleCode() { return scheduleCode; }
@@ -69,18 +78,32 @@ public class TrainSchedule extends BaseEntity {
     public LocalDate getTravelDate() { return travelDate; }
     public LocalTime getDepartureTime() { return departureTime; }
     public LocalTime getArrivalTime() { return arrivalTime; }
-    public BigDecimal getBaseFare() { return baseFare; }
+    public BigDecimal getFirstClassFare() { return firstClassFare; }
+    public BigDecimal getSecondClassFare() { return secondClassFare; }
+    public BigDecimal getThirdClassFare() { return thirdClassFare; }
     public ScheduleStatus getStatus() { return status; }
 
+    public BigDecimal fareFor(lk.sliit.railconnect.features.carriage.domain.CarriageClass carriageClass) {
+        return switch (carriageClass) {
+            case FIRST -> firstClassFare;
+            case SECOND -> secondClassFare;
+            case THIRD -> thirdClassFare;
+        };
+    }
+
     public void update(String scheduleCode, Train train, Route route, LocalDate travelDate,
-                       LocalTime departureTime, LocalTime arrivalTime, BigDecimal baseFare, ScheduleStatus status) {
+                       LocalTime departureTime, LocalTime arrivalTime,
+                       BigDecimal firstClassFare, BigDecimal secondClassFare, BigDecimal thirdClassFare,
+                       ScheduleStatus status) {
         this.scheduleCode = scheduleCode;
         this.train = train;
         this.route = route;
         this.travelDate = travelDate;
         this.departureTime = departureTime;
         this.arrivalTime = arrivalTime;
-        this.baseFare = baseFare;
+        this.firstClassFare = firstClassFare;
+        this.secondClassFare = secondClassFare;
+        this.thirdClassFare = thirdClassFare;
         this.status = status;
     }
 

@@ -24,7 +24,11 @@ public class ScheduleForm {
     @NotNull @DateTimeFormat(iso = DateTimeFormat.ISO.TIME)
     private LocalTime arrivalTime;
     @NotNull @DecimalMin("0.0")
-    private BigDecimal baseFare;
+    private BigDecimal firstClassFare;
+    @NotNull @DecimalMin("0.0")
+    private BigDecimal secondClassFare;
+    @NotNull @DecimalMin("0.0")
+    private BigDecimal thirdClassFare;
     private ScheduleStatus status = ScheduleStatus.ACTIVE;
 
     public static ScheduleForm from(TrainSchedule schedule) {
@@ -35,7 +39,9 @@ public class ScheduleForm {
         form.travelDate = schedule.getTravelDate();
         form.departureTime = schedule.getDepartureTime();
         form.arrivalTime = schedule.getArrivalTime();
-        form.baseFare = schedule.getBaseFare();
+        form.firstClassFare = schedule.getFirstClassFare();
+        form.secondClassFare = schedule.getSecondClassFare();
+        form.thirdClassFare = schedule.getThirdClassFare();
         form.status = schedule.getStatus();
         return form;
     }
@@ -52,8 +58,12 @@ public class ScheduleForm {
     public void setDepartureTime(LocalTime departureTime) { this.departureTime = departureTime; }
     public LocalTime getArrivalTime() { return arrivalTime; }
     public void setArrivalTime(LocalTime arrivalTime) { this.arrivalTime = arrivalTime; }
-    public BigDecimal getBaseFare() { return baseFare; }
-    public void setBaseFare(BigDecimal baseFare) { this.baseFare = baseFare; }
+    public BigDecimal getFirstClassFare() { return firstClassFare; }
+    public void setFirstClassFare(BigDecimal firstClassFare) { this.firstClassFare = firstClassFare; }
+    public BigDecimal getSecondClassFare() { return secondClassFare; }
+    public void setSecondClassFare(BigDecimal secondClassFare) { this.secondClassFare = secondClassFare; }
+    public BigDecimal getThirdClassFare() { return thirdClassFare; }
+    public void setThirdClassFare(BigDecimal thirdClassFare) { this.thirdClassFare = thirdClassFare; }
     public ScheduleStatus getStatus() { return status; }
     public void setStatus(ScheduleStatus status) { this.status = status; }
 }

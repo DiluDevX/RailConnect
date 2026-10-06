@@ -2,6 +2,12 @@
 
 ## Expanded booking demo data
 
+The integrated maintenance/pricing changes use V9 and V10. V9 creates maintenance
+records; V10 migrates existing effective class fares onto schedules. No Flyway
+repair or database reset is required for databases created from main. Do not run
+the unmodified develop migrations on an existing main database: they reuse V8
+and change historical checksums. Make a backup before upgrading.
+
 Migration V8 adds nine clearly labelled demo trains, 27 carriages, 540 seats and
 270 schedules (three services per route daily for 30 days, starting tomorrow).
 Routes: Colombo Fort to Kandy, Colombo Fort to Galle, and Kandy to Colombo Fort.

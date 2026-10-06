@@ -4,7 +4,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectedSeats = document.getElementById("selected-seats");
     const classFilter = document.getElementById("class-filter");
     const bookingForm = seats[0]?.closest("form");
-    const baseFare = Number(bookingForm?.dataset.baseFare || 0);
     const seatFareTotal = document.getElementById("seat-fare-total");
     const reservationFee = document.getElementById("reservation-fee");
     const estimatedTotal = document.getElementById("estimated-total");
@@ -25,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         const fare = selected.reduce((total, seat) => {
             const seatClass = seat.closest(".seat-choice")?.dataset.carriageClass;
-            return total + (classFares[seatClass] || baseFare);
+            return total + (classFares[seatClass] || 0);
         }, 0);
         const fee = selected.length ? 100 : 0;
         if (seatFareTotal) seatFareTotal.textContent = money(fare);

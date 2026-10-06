@@ -4,13 +4,15 @@ The folders are ownership boundaries for collaboration, not permission to change
 shared contracts without discussing the impact. Database and shared security changes
 can affect every member.
 
-## Rukshana — Train Management
+## Rukshana — Train and Maintenance Management
 
-Owns `features/train` and the `trains` table.
+Owns `features/train`, the `trains` table and the `maintenance` table.
 
 - Create, list/search, update and deactivate/reactivate trains.
+- Record train maintenance, filter it, cancel open work and delete only scheduled records.
 - Explain why `totalCapacity` is derived from active carriages.
 - Coordinate with Kaveen when changing train/carriage relationships.
+- A maintenance record does not itself change train status or schedule eligibility.
 
 ## Kenula — Route Management
 

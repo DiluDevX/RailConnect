@@ -15,6 +15,7 @@ import java.util.Optional;
 public interface TrainScheduleRepository extends JpaRepository<TrainSchedule, Long> {
     boolean existsByScheduleCodeIgnoreCase(String scheduleCode);
     boolean existsByScheduleCodeIgnoreCaseAndIdNot(String scheduleCode, Long id);
+    boolean existsByTrain_Id(Long trainId);
     @EntityGraph(attributePaths = {"train", "route"})
     List<TrainSchedule> findAllByOrderByTravelDateAscDepartureTimeAsc();
 
